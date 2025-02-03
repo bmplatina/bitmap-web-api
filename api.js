@@ -143,7 +143,7 @@ app.post('/api/games/push', (req, res) => {
       console.error('데이터 삽입 중 오류:', err);
       res.status(500).send('서버 오류');
       return;
-    }∂
+    }
     res.json({
       message: '새로운 게임이 추가되었습니다!',
       id: result.insertId,
