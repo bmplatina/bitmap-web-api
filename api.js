@@ -4,7 +4,7 @@ const cors = require('cors');
 const dotenv = require('dotenv').config();
 
 const app = express();
-const port = 3030;
+const PORT = 3030;
 const API_URL = "https://wiki.prodbybitmap.com/w/api.php";
 
 // MySQL 연결 풀 설정
@@ -143,7 +143,7 @@ app.post('/api/games/push', (req, res) => {
       console.error('데이터 삽입 중 오류:', err);
       res.status(500).send('서버 오류');
       return;
-    }
+    }∂
     res.json({
       message: '새로운 게임이 추가되었습니다!',
       id: result.insertId,
@@ -152,6 +152,6 @@ app.post('/api/games/push', (req, res) => {
 });
 
 // 서버 시작
-app.listen(port, () => {
-  console.log(`서버가 http://localhost:${port} 에서 실행 중`);
+app.listen(PORT, () => {
+  console.log(`서버가 http://localhost:${PORT} 에서 실행 중`);
 });
