@@ -49,6 +49,13 @@ const db = mysql.createPool({
 //   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 //   optionsSuccessStatus: 200 // 일부 브라우저에서 204 허용 안 하는 문제 해결
 // }));
+app.use(cors({
+  origin: '*',
+  credentials: true,  // 쿠키를 포함한 요청 허용
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  optionsSuccessStatus: 200 // 일부 브라우저에서 204 허용 안 하는 문제 해결
+}));
 // JSON 파싱을 위한 미들웨어
 app.use(express.json());
 
