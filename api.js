@@ -30,8 +30,14 @@ const db = mysql.createPool({
 app.use(express.json());
 app.use(cors({
   origin: (origin, callback) => {
-    const allowedOrigins = [/^https?:\/\/(.*\.)?prodbybitmap\.com(:\d+)?$/, 'http://localhost:5173', `http://localhost:${PORT}`]; // 여러 출처
-    if (allowedOrigins.includes(origin) || !origin) {  // !origin은 서버 측에서 호출한 경우를 처리
+    const allowedOrigins = [
+      /^https?:\/\/(.*\.)?prodbybitmap\.com(:\d+)?$/,  // 정규식 패턴 추가
+      'http://localhost:5173',
+      `http://localhost:${PORT}`
+    ];
+
+    // 정규식으로 검사 (some()을 사용해서 배열 내 정규식 체크)
+    if (!origin || allowedOrigins.some(pattern => pattern instanceof RegExp ? pattern.test(origin) : pattern === origin)) {
       callback(null, true);  // CORS 허용
     } else {
       callback(new Error('Not allowed by CORS'));  // CORS 허용하지 않음
