@@ -50,7 +50,7 @@ const db = mysql.createPool({
 //   optionsSuccessStatus: 200 // 일부 브라우저에서 204 허용 안 하는 문제 해결
 // }));
 app.use(cors({
-  origin: '*',
+  origin: 'https://prodbybitmap.com',
   credentials: true,  // 쿠키를 포함한 요청 허용
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
