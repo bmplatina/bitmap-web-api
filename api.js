@@ -2,10 +2,18 @@ const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
 const dotenv = require('dotenv').config();
+const axios = require('axios');
+const { wrapper } = require('axios-cookiejar-support');
+const tough = require('tough-cookie');
 
+// Express 설정
 const app = express();
 const PORT = 3030;
 const API_URL = "https://wiki.prodbybitmap.com/w/api.php";
+
+// Axios
+const jar = new tough.CookieJar();
+const client = wrapper(axios.create({ jar }));
 
 // MySQL 연결 풀 설정
 const db = mysql.createPool({
@@ -32,6 +40,71 @@ app.use(cors({
   credentials: true,  // 쿠키를 포함한 요청 허용
 }));
 
+// CSRF 토큰까지 한 번에 받는 로그인 코드
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    // 1. CSRF 토큰 요청
+    const tokenRes = await client.get(`${API_URL}?action=query&meta=tokens&type=login&format=json`, {
+      withCredentials: true,
+    });
+
+    const loginToken = tokenRes.data?.query?.tokens?.logintoken;
+    if (!loginToken) throw new Error("Failed to retrieve CSRF token");
+
+    // 2. 로그인 요청 (쿠키 유지됨)
+    const loginRes = await client.post(API_URL, new URLSearchParams({
+      action: "login",
+      format: "json",
+      lgname: username,
+      lgpassword: password,
+      lgtoken: loginToken,
+    }).toString(), {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      withCredentials: true,
+    });
+
+    res.json(loginRes.data);
+  } catch (error) {
+    res.status(500).json({ error: `Login request failed, ${error.message}` });
+  }
+});
+
+// CSRF 토큰까지 한 번에 받는 가입 요청 (프록시)
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { email, username, password } = req.body;
+
+    // 1. CSRF 토큰 요청
+    const tokenRes = await client.get(`${API_URL}?action=query&meta=tokens&type=createaccount&format=json`, {
+      withCredentials: true,
+    });
+
+    const createAccountToken = tokenRes.data?.query?.tokens?.createaccounttoken;
+    if (!createAccountToken) throw new Error("Failed to retrieve CSRF token");
+
+    const accountRes = await client.post(API_URL, new URLSearchParams({
+      action: "createaccount",
+      format: "json",
+      username: username,
+      password: password,
+      retype: password,
+      email: email,
+      createreturnurl: "https://prodbybitmap.com/",
+      createtoken: createAccountToken,
+    }).toString(), {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      withCredentials: true,
+    });
+
+    const accountData = await accountRes.data;
+    res.json(accountData);
+  } catch (error) {
+    res.status(500).json({ error: `Login request failed, ${error}` });
+  }
+});
+
 // 모든 데이터 가져오기 API
 app.get('/api/games', (req, res) => {
   const sql = 'SELECT * FROM Games';
@@ -43,79 +116,6 @@ app.get('/api/games', (req, res) => {
     }
     res.json(results);
   });
-});
-
-// CSRF 토큰 가져오기 (프록시)
-app.get("/api/auth/token", async (req, res) => {
-  try {
-    const { type } = req.query;
-
-    if(!type) throw new Error("Invalid type");
-
-    const tokenRes = await fetch(`${API_URL}?action=query&meta=tokens&type=${type}&format=json`, {
-      method: "GET",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    const tokenData = await tokenRes.json();
-    res.json(tokenData);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch CSRF token" });
-  }
-});
-
-// 로그인 요청 (프록시)
-app.post("/api/auth/login", async (req, res) => {
-  try {
-    const { username, password, loginToken } = req.body;
-
-    const loginRes = await fetch(API_URL, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        action: "login",
-        format: "json",
-        lgname: username,
-        lgpassword: password,
-        lgtoken: loginToken,
-      }),
-    });
-
-    const loginData = await loginRes.json();
-    res.json(loginData);
-  } catch (error) {
-    res.status(500).json({ error: "Login request failed" });
-  }
-});
-
-// 가입 요청 (프록시)
-app.post("/api/auth/register", async (req, res) => {
-  try {
-    const { username, password, csrfToken } = req.body;
-
-    const accountRes = await fetch(API_URL, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: new URLSearchParams({
-        action: "createaccount",
-        format: "json",
-        username: username,
-        password: password,
-        retype: password,
-        email: email,
-        createreturnurl: "https://wiki.prodbybitmap.com/",
-        token: csrfToken,
-      }),
-    });
-
-    const accountData = await accountRes.json();
-    res.json(accountRes);
-  } catch (error) {
-    res.status(500).json({ error: "Login request failed" });
-  }
 });
 
 // 등록을 대기 중인 게임
