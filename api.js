@@ -31,6 +31,8 @@ app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = [
       /^https?:\/\/(.*\.)?prodbybitmap\.com(:\d+)?$/,  // 정규식 패턴 추가
+      'https://prodbybitmap.com',
+      'https://*.prodbybitmap.com',
       'http://localhost:5173',
       `http://localhost:${PORT}`
     ];
@@ -59,7 +61,7 @@ app.post("/api/auth/login", async (req, res) => {
       withCredentials: true,
     });
 
-    const loginToken = tokenRes.data?.query?.tokens?.logintoken;
+    const loginToken = tokenRes.data.query?.tokens?.logintoken;
     if (!loginToken) throw new Error("Failed to retrieve CSRF token");
 
     // 2. 로그인 요청 (쿠키 유지됨)
@@ -90,7 +92,7 @@ app.post("/api/auth/register", async (req, res) => {
       withCredentials: true,
     });
 
-    const createAccountToken = tokenRes.data?.query?.tokens?.createaccounttoken;
+    const createAccountToken = tokenRes.data.query?.tokens?.createaccounttoken;
     if (!createAccountToken) throw new Error("Failed to retrieve CSRF token");
 
     const accountRes = await client.post(API_URL, new URLSearchParams({
@@ -104,6 +106,43 @@ app.post("/api/auth/register", async (req, res) => {
       createtoken: createAccountToken,
     }).toString(), {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      withCredentials: true,
+    });
+
+    const accountData = await accountRes.data;
+    res.json(accountData);
+  } catch (error) {
+    res.status(500).json({ error: `Login request failed, ${error}` });
+  }
+});
+
+// CSRF 토큰까지 한 번에 받는 로그아웃 요청 (프록시)
+app.post("/api/auth/logout", async (req, res) => {
+  try {
+    const { email, username, password } = req.body;
+
+    // 1. CSRF 토큰 요청
+    const tokenRes = await client.get(`${API_URL}?action=query&meta=tokens&type=csrf&format=json`, {
+      withCredentials: true,
+    });
+
+    const tokenData = tokenRes.data.query?.tokens?.csrftoken;
+    if (!tokenData) throw new Error("Failed to retrieve CSRF token");
+
+    const accountRes = await client.post(API_URL, new URLSearchParams({
+      action: "logout",
+      format: "json",
+      username: username,
+      password: password,
+      retype: password,
+      email: email,
+      createreturnurl: "https://prodbybitmap.com/",
+      createtoken: createAccountToken,
+    }).toString(), {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        // Cookie:
+      },
       withCredentials: true,
     });
 
