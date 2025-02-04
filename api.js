@@ -22,7 +22,7 @@ const db = mysql.createPool({
 app.use(express.json());
 app.use(cors({
   origin: (origin, callback) => {
-    const allowedOrigins = ['https://prodbybitmap.com', 'http://localhost:5173', `http://localhost:${PORT}`]; // 여러 출처
+    const allowedOrigins = [/^https?:\/\/(.*\.)?prodbybitmap\.com(:\d+)?$/, 'http://localhost:5173', `http://localhost:${PORT}`]; // 여러 출처
     if (allowedOrigins.includes(origin) || !origin) {  // !origin은 서버 측에서 호출한 경우를 처리
       callback(null, true);  // CORS 허용
     } else {
@@ -46,7 +46,7 @@ app.get('/api/games', (req, res) => {
 });
 
 // CSRF 토큰 가져오기 (프록시)
-app.get("/api/token", async (req, res) => {
+app.get("/api/auth/token", async (req, res) => {
   try {
     const { type } = req.query;
 
@@ -66,7 +66,7 @@ app.get("/api/token", async (req, res) => {
 });
 
 // 로그인 요청 (프록시)
-app.post("/api/login", async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   try {
     const { username, password, loginToken } = req.body;
 
@@ -91,7 +91,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // 가입 요청 (프록시)
-app.post("/api/register", async (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
   try {
     const { username, password, csrfToken } = req.body;
 
