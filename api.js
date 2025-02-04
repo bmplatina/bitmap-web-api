@@ -27,7 +27,6 @@ const db = mysql.createPool({
 });
 
 // JSON 파싱을 위한 미들웨어
-app.use(express.json());
 app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = [
@@ -44,7 +43,11 @@ app.use(cors({
     }
   },
   credentials: true,  // 쿠키를 포함한 요청 허용
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  optionsSuccessStatus: 200 // 일부 브라우저에서 204 허용 안 하는 문제 해결
 }));
+app.use(express.json());
 
 // CSRF 토큰까지 한 번에 받는 로그인 코드
 app.post("/api/auth/login", async (req, res) => {
