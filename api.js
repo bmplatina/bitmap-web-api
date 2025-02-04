@@ -26,29 +26,30 @@ const db = mysql.createPool({
   queueLimit: 0,         // 대기열 제한 없음
 });
 
-// JSON 파싱을 위한 미들웨어
-app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      /^https?:\/\/(.*\.)?prodbybitmap\.com(:\d+)?$/,  // 정규식 패턴 추가
-      'https://prodbybitmap.com',
-      'https://*.prodbybitmap.com',
-      'http://localhost:5173',
-      `http://localhost:${PORT}`
-    ];
 
-    // 정규식으로 검사 (some()을 사용해서 배열 내 정규식 체크)
-    if (!origin || allowedOrigins.some(pattern => pattern instanceof RegExp ? pattern.test(origin) : pattern === origin)) {
-      callback(null, true);  // CORS 허용
-    } else {
-      callback(new Error('Not allowed by CORS'));  // CORS 허용하지 않음
-    }
-  },
-  credentials: true,  // 쿠키를 포함한 요청 허용
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  optionsSuccessStatus: 200 // 일부 브라우저에서 204 허용 안 하는 문제 해결
-}));
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     const allowedOrigins = [
+//       /^https?:\/\/(.*\.)?prodbybitmap\.com(:\d+)?$/,  // 정규식 패턴 추가
+//       'https://prodbybitmap.com',
+//       'https://*.prodbybitmap.com',
+//       'http://localhost:5173',
+//       `http://localhost:${PORT}`
+//     ];
+//
+//     // 정규식으로 검사 (some()을 사용해서 배열 내 정규식 체크)
+//     if (!origin || allowedOrigins.some(pattern => pattern instanceof RegExp ? pattern.test(origin) : pattern === origin)) {
+//       callback(null, true);  // CORS 허용
+//     } else {
+//       callback(new Error('Not allowed by CORS'));  // CORS 허용하지 않음
+//     }
+//   },
+//   credentials: true,  // 쿠키를 포함한 요청 허용
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+//   optionsSuccessStatus: 200 // 일부 브라우저에서 204 허용 안 하는 문제 해결
+// }));
+// JSON 파싱을 위한 미들웨어
 app.use(express.json());
 
 // CSRF 토큰까지 한 번에 받는 로그인 코드
