@@ -4,6 +4,7 @@
 // 서버 모듈
 const express = require("express");
 const http = require("http");
+const cors = require('cors');
 
 // MySQL 데이터베이스
 const mysql = require("mysql2");
@@ -27,6 +28,18 @@ const PORT = 3030;
 // WebSocket 설정
 const wss = new WebSocketServer({ server }); // HTTP 서버에 WebSocket 서버 연결
 const userConnections = new Map(); // userId와 ws 연결을 매핑
+
+app.use(
+  cors({
+    origin: "https://prodbybitmap.com",
+    credentials: true, // 쿠키를 포함한 요청 허용
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    optionsSuccessStatus: 200, // 일부 브라우저에서 204 허용 안 하는 문제 해결
+  })
+);
+// JSON 파싱을 위한 미들웨어
+app.use(express.json());
 
 wss.on("connection", (ws) => {
   console.log("✅ 클라이언트가 연결되었습니다. 사용자 ID를 기다리는 중...");
