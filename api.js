@@ -223,7 +223,7 @@ app.get("/auth/profile", authMiddleware, (req, res) => {
  */
 
 // 모든 게임 데이터 가져오기 API
-app.get("/games", (req, res) => {
+app.get("/games/released", (req, res) => {
   const sql = "SELECT * FROM Games";
   gameDb.query(sql, (err, results) => {
     if (err) {
@@ -236,7 +236,7 @@ app.get("/games", (req, res) => {
 });
 
 // 등록을 대기 중인 게임
-app.get("/games-pending", (req, res) => {
+app.get("/games/pending", (req, res) => {
   const sql = "SELECT * FROM GamesPending";
   gameDb.query(sql, (err, results) => {
     if (err) {
@@ -274,7 +274,7 @@ app.post("/notify/:userId", (req, res) => {
 });
 
 // 데이터 삽입 API
-app.post("/games/push", (req, res) => {
+app.post("/games/submit", (req, res) => {
   const newGame = req.body;
 
   // 예: newGame이 { title: "Game1", genre: "Action" }와 같은 형식이라고 가정
