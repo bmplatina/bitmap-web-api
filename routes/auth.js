@@ -102,9 +102,10 @@ router.get(
 
 // 6. 보호된 라우트 (기존 코드 유지)
 router.get("/profile", authMiddleware, (req, res) => {
-  res.send(
-    `안녕하세요, ${req.user.username}님! 당신의 ID는 ${req.user.id}입니다.`
-  );
+  res.json({
+    id: req.user.id,
+    username: req.user.username
+  });
 });
 
 module.exports = router;
