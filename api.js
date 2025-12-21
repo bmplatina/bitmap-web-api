@@ -12,6 +12,7 @@ const { initializeWebSocket } = require("./websockets/websocketHandler");
 const authRoutes = require("./routes/auth");
 const gamesRoutes = require("./routes/games");
 const notificationRoutes = require("./routes/notifications");
+const uploadRoutes = require("./routes/upload");
 
 // Express 설정
 const app = express();
@@ -38,6 +39,7 @@ app.use(express.json());
 app.use("/auth", authRoutes);
 app.use("/games", gamesRoutes);
 app.use("/notify", notificationRoutes);
+app.use("/upload", uploadRoutes);
 
 // 서버 시작
 server.listen(PORT, () => {
