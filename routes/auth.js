@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const passport = require("passport"); // Passport 추가
 const GoogleStrategy = require("passport-google-oauth20").Strategy; // 구글 전략 추가
+const { v4: uuidv4 } = require("uuid");
 const { authDb } = require("../config/db");
 
 const router = express.Router();
@@ -15,7 +16,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/callback", // 구글 콘솔에 등록한 리다이렉트 URI
+      callbackURL: "/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -26,16 +27,18 @@ passport.use(
         );
         let user = rows[0];
 
-        // 2. 사용자가 없다면 회원가입 처리 (DB 저장)
+        // 2. 사용자가 없다면 회원가입 처리
         if (!user) {
-          const [result] = await authDb.query(
-            "INSERT INTO users (username, google_id) VALUES (?, ?)",
-            [profile.displayName, profile.id] // displayName은 구글 이름
+          const newUid = uuidv4(); // 2. 고유한 UUID 생성 (예: '1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed')
+
+          await authDb.query(
+            "INSERT INTO users (uid, username, google_id) VALUES (?, ?, ?)",
+            [newUid, profile.displayName, profile.id] // 3. uid 컬럼에 저장
           );
-          user = { id: result.insertId, username: profile.displayName };
+
+          user = { uid: newUid, username: profile.displayName };
         }
 
-        // 3. 사용자 정보를 passport로 넘김
         return done(null, user);
       } catch (error) {
         return done(error, null);
@@ -64,7 +67,85 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// ... 기존 /signup, /login 라우트 생략 (그대로 사용) ...
+// 3. 회원가입 API
+router.post("/signup", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res
+        .status(400)
+        .send("사용자 이름과 비밀번호를 모두 입력해주세요.");
+    }
+
+    // 2. 고유 UID 생성
+    const newUid = uuidv4();
+
+    // 비밀번호 해싱 (Salt rounds: 10)
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 3. 사용자 정보 DB에 저장 (uid 컬럼 추가)
+    await authDb.query(
+      "INSERT INTO users (uid, username, password) VALUES (?, ?, ?)",
+      [newUid, username, hashedPassword]
+    );
+
+    // 응답 시에도 id 대신 uid 반환
+    res.status(201).send({ uid: newUid, username });
+  } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).send("이미 존재하는 사용자 이름입니다.");
+    }
+    console.error(error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
+});
+
+// 4. 로그인 API
+router.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res
+        .status(400)
+        .send("사용자 이름과 비밀번호를 모두 입력해주세요.");
+    }
+
+    // 사용자 조회 (조회 시 uid를 가져오는지 확인)
+    const [rows] = await authDb.query(
+      "SELECT * FROM users WHERE username = ?",
+      [username]
+    );
+    const user = rows[0];
+
+    if (!user) {
+      return res
+        .status(401)
+        .send("사용자 정보가 없거나 비밀번호가 일치하지 않습니다.");
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res
+        .status(401)
+        .send("사용자 정보가 없거나 비밀번호가 일치하지 않습니다.");
+    }
+
+    // 4. JWT 생성 시 id 대신 user.uid 사용
+    const token = jwt.sign(
+      { uid: user.uid, username: user.username }, // 페이로드 변경
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.status(200).json({ token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
+});
 
 // ==========================================
 // [추가] Google 로그인 라우트
@@ -88,14 +169,16 @@ router.get(
 
     // 3. JWT 토큰 발급 (기존 /login 로직과 동일한 포맷)
     const token = jwt.sign(
-      { id: req.user.id, username: req.user.username },
+      // { id: req.user.id, username: req.user.username },
+      { uid: req.user.uid, username: req.user.username }, // id -> uid로 변경
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
     // 4. 프론트엔드로 리다이렉트 (URL 쿼리 파라미터로 토큰 전달)
     // 주의: 실제 배포 시에는 보안을 위해 쿠키나 다른 방법을 고려해야 할 수 있습니다.
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl =
+      process.env.FRONTEND_URL || "https://api.prodbybitmap.com";
     res.redirect(`${frontendUrl}?token=${token}`);
   }
 );
@@ -104,7 +187,7 @@ router.get(
 router.get("/profile", authMiddleware, (req, res) => {
   res.json({
     id: req.user.id,
-    username: req.user.username
+    username: req.user.username,
   });
 });
 
