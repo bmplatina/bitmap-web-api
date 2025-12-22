@@ -34,7 +34,7 @@ const uploadImage = multer({
   }),
   fileFilter: fileFilterImage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB 제한 (바이트 단위)
+    fileSize: 10 * 1024 * 1024, // 10MB 제한 (바이트 단위)
   },
 });
 
