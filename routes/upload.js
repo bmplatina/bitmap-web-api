@@ -29,8 +29,20 @@ const fileFilterImage = (req, file, cb) => {
 };
 
 const uploadImage = multer({
-  storage: multer.diskStorage({
-    /* 이전 답변의 storage 설정과 동일 */
+  storageImage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      // 여기에 저장하고 싶은 경로를 입력합니다.
+      // 주의: 해당 폴더가 서버에 미리 생성되어 있어야 합니다.
+      cb(null, "uploads/images/");
+    },
+    filename: (req, file, cb) => {
+      // 파일명 저장 방식 (중복 방지를 위해 타임스탬프 추가 권장)
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(
+        null,
+        file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+      );
+    },
   }),
   fileFilter: fileFilterImage,
   limits: {
@@ -60,8 +72,20 @@ const fileFilterGameBinary = (req, file, cb) => {
 };
 
 const uploadGameBinary = multer({
-  storage: multer.diskStorage({
-    /* 이전 답변의 storage 설정과 동일 */
+  storageImage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      // 여기에 저장하고 싶은 경로를 입력합니다.
+      // 주의: 해당 폴더가 서버에 미리 생성되어 있어야 합니다.
+      cb(null, "uploads/games/");
+    },
+    filename: (req, file, cb) => {
+      // 파일명 저장 방식 (중복 방지를 위해 타임스탬프 추가 권장)
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(
+        null,
+        file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+      );
+    },
   }),
   fileFilter: fileFilterGameBinary,
   limits: {
