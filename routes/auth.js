@@ -190,4 +190,36 @@ router.get("/profile", authMiddleware, (req, res) => {
   });
 });
 
+// 7. UID 기반으로 프로필 검색
+router.post("/profile/query/uid", async (req, res) => {
+  try {
+    const { uid } = req.body;
+
+    if (!uid) {
+      return res.status(400).send("UID가 필요합니다.");
+    }
+
+    // username과 email을 동시에 가져오는 쿼리
+    const [rows] = await authDb.query(
+      "SELECT username, email FROM users WHERE uid = ?", 
+      [uid]
+    );
+
+    const user = rows[0];
+
+    if (!user) {
+      return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+    }
+
+    // 클라이언트에 두 정보 모두 전달
+    res.status(200).json({
+      username: user.username,
+      email: user.email
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("서버 오류가 발생했습니다.");
+  }
+});
+
 module.exports = router;
