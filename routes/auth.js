@@ -176,8 +176,7 @@ router.get(
 
     // 4. 프론트엔드로 리다이렉트 (URL 쿼리 파라미터로 토큰 전달)
     // 주의: 실제 배포 시에는 보안을 위해 쿠키나 다른 방법을 고려해야 할 수 있습니다.
-    const frontendUrl =
-      process.env.FRONTEND_URL || "https://api.prodbybitmap.com";
+    const frontendUrl = process.env.FRONTEND_URL || "https://prodbybitmap.com";
     res.redirect(`${frontendUrl}?token=${token}`);
   }
 );
@@ -185,7 +184,7 @@ router.get(
 // 6. 보호된 라우트 (기존 코드 유지)
 router.get("/profile", authMiddleware, (req, res) => {
   res.json({
-    id: req.user.id,
+    uid: req.user.uid,
     username: req.user.username,
     email: req.user.email,
   });
