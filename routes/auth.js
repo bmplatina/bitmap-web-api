@@ -70,9 +70,9 @@ const authMiddleware = (req, res, next) => {
 // 3. 회원가입 API
 router.post("/signup", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, email, password } = req.body;
 
-    if (!username || !password) {
+    if (!username || !password || !email) {
       return res
         .status(400)
         .send("사용자 이름과 비밀번호를 모두 입력해주세요.");
@@ -86,8 +86,8 @@ router.post("/signup", async (req, res) => {
 
     // 3. 사용자 정보 DB에 저장 (uid 컬럼 추가)
     await authDb.query(
-      "INSERT INTO users (uid, username, password) VALUES (?, ?, ?)",
-      [newUid, username, hashedPassword]
+      "INSERT INTO users (uid, username, email, password) VALUES (?, ?, ?)",
+      [newUid, username, email, hashedPassword]
     );
 
     // 응답 시에도 id 대신 uid 반환
@@ -104,19 +104,18 @@ router.post("/signup", async (req, res) => {
 // 4. 로그인 API
 router.post("/login", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!username || !password) {
+    if (!email || !password) {
       return res
         .status(400)
         .send("사용자 이름과 비밀번호를 모두 입력해주세요.");
     }
 
     // 사용자 조회 (조회 시 uid를 가져오는지 확인)
-    const [rows] = await authDb.query(
-      "SELECT * FROM users WHERE username = ?",
-      [username]
-    );
+    const [rows] = await authDb.query("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
     const user = rows[0];
 
     if (!user) {
@@ -135,7 +134,7 @@ router.post("/login", async (req, res) => {
 
     // 4. JWT 생성 시 id 대신 user.uid 사용
     const token = jwt.sign(
-      { uid: user.uid, username: user.username }, // 페이로드 변경
+      { uid: user.uid, email: user.email }, // 페이로드 변경
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
@@ -188,6 +187,7 @@ router.get("/profile", authMiddleware, (req, res) => {
   res.json({
     id: req.user.id,
     username: req.user.username,
+    email: req.user.email,
   });
 });
 
