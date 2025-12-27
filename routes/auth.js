@@ -187,6 +187,8 @@ router.get("/profile", authMiddleware, (req, res) => {
     uid: req.user.uid,
     username: req.user.username,
     email: req.user.email,
+    isAdmin: req.user.isadmin,
+    isDeveloper: req.user.isdeveloper,
   });
 });
 
