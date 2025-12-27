@@ -13,6 +13,7 @@ const authRoutes = require("./routes/auth");
 const gamesRoutes = require("./routes/games");
 const notificationRoutes = require("./routes/notifications");
 const uploadRoutes = require("./routes/upload");
+const youtubeRoutes = require("./routes/youtube");
 
 // Express 설정
 const app = express();
@@ -40,6 +41,7 @@ app.use("/auth", authRoutes);
 app.use("/games", gamesRoutes);
 app.use("/notify", notificationRoutes);
 app.use("/upload", uploadRoutes);
+app.use("/youtube", youtubeRoutes);
 
 // 서버 시작
 server.listen(PORT, () => {

@@ -1,3 +1,4 @@
+const { youtube } = require("googleapis/build/src/apis/youtube");
 const mysql = require("mysql2/promise");
 require("dotenv").config();
 
@@ -22,4 +23,10 @@ const authDb = mysql.createPool({
   queueLimit: 0, // 대기열 제한 없음
 });
 
-module.exports = { gameDb, authDb };
+const googleApiKey = {
+  googleClientId: process.env.GOOGLE_CLIENT_ID,
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  youtubeApiKey: process.env.YOUTUBE_API_KEY,
+};
+
+module.exports = { gameDb, authDb, googleApiKey };

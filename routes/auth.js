@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const passport = require("passport"); // Passport 추가
 const GoogleStrategy = require("passport-google-oauth20").Strategy; // 구글 전략 추가
 const { v4: uuidv4 } = require("uuid");
-const { authDb } = require("../config/db");
+const { authDb, googleApiKey } = require("../config/db");
 
 const router = express.Router();
 
@@ -14,8 +14,8 @@ const router = express.Router();
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientID: googleApiKey.googleClientId,
+      clientSecret: googleApiKey.googleClientSecret,
       callbackURL: "/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
@@ -201,7 +201,7 @@ router.post("/profile/query/uid", async (req, res) => {
 
     // username과 email을 동시에 가져오는 쿼리
     const [rows] = await authDb.query(
-      "SELECT username, email FROM users WHERE uid = ?", 
+      "SELECT username, email FROM users WHERE uid = ?",
       [uid]
     );
 
@@ -214,7 +214,7 @@ router.post("/profile/query/uid", async (req, res) => {
     // 클라이언트에 두 정보 모두 전달
     res.status(200).json({
       username: user.username,
-      email: user.email
+      email: user.email,
     });
   } catch (error) {
     console.error(error);
