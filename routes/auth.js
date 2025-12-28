@@ -55,7 +55,7 @@ passport.use(
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).send("인증 토큰이 필요합니다.");
+    return res.status(401).send("token-required");
   }
   const token = authHeader.split(" ")[1];
   try {
@@ -63,7 +63,7 @@ const authMiddleware = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).send("유효하지 않은 토큰입니다.");
+    res.status(401).send("invalid-token");
   }
 };
 
@@ -73,9 +73,7 @@ router.post("/signup", async (req, res) => {
     const { username, email, password } = req.body;
 
     if (!username || !password || !email) {
-      return res
-        .status(400)
-        .send("사용자 이름과 비밀번호를 모두 입력해주세요.");
+      return res.status(400).send("require-id-pw");
     }
 
     // 2. 고유 UID 생성
@@ -94,10 +92,10 @@ router.post("/signup", async (req, res) => {
     res.status(201).send({ uid: newUid, username });
   } catch (error) {
     if (error.code === "ER_DUP_ENTRY") {
-      return res.status(409).send("이미 존재하는 사용자 이름입니다.");
+      return res.status(409).send("username-exists");
     }
     console.error(error);
-    res.status(500).send("서버 오류가 발생했습니다.");
+    res.status(500).send("server-error");
   }
 });
 
@@ -107,9 +105,7 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res
-        .status(400)
-        .send("사용자 이름과 비밀번호를 모두 입력해주세요.");
+      return res.status(400).send("require-id-pw");
     }
 
     // 사용자 조회 (조회 시 uid를 가져오는지 확인)
@@ -119,17 +115,13 @@ router.post("/login", async (req, res) => {
     const user = rows[0];
 
     if (!user) {
-      return res
-        .status(401)
-        .send("사용자 정보가 없거나 비밀번호가 일치하지 않습니다.");
+      return res.status(401).send("incorrect-id-pw");
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res
-        .status(401)
-        .send("사용자 정보가 없거나 비밀번호가 일치하지 않습니다.");
+      return res.status(401).send("incorrect-id-pw");
     }
 
     // 4. JWT 생성 시 id 대신 user.uid 사용
@@ -142,7 +134,7 @@ router.post("/login", async (req, res) => {
     res.status(200).json({ token });
   } catch (error) {
     console.error(error);
-    res.status(500).send("서버 오류가 발생했습니다.");
+    res.status(500).send("server-error");
   }
 });
 
@@ -198,7 +190,7 @@ router.post("/profile/query/uid", async (req, res) => {
     const { uid } = req.body;
 
     if (!uid) {
-      return res.status(400).send("UID가 필요합니다.");
+      return res.status(400).send("require-uid");
     }
 
     // username과 email을 동시에 가져오는 쿼리
@@ -210,7 +202,7 @@ router.post("/profile/query/uid", async (req, res) => {
     const user = rows[0];
 
     if (!user) {
-      return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+      return res.status(404).json({ message: "failed-query-by-uid" });
     }
 
     // 클라이언트에 두 정보 모두 전달
@@ -220,7 +212,7 @@ router.post("/profile/query/uid", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send("서버 오류가 발생했습니다.");
+    res.status(500).send("server-error");
   }
 });
 
