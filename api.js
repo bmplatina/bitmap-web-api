@@ -14,6 +14,7 @@ const gamesRoutes = require("./routes/games");
 const notificationRoutes = require("./routes/notifications");
 const uploadRoutes = require("./routes/upload");
 const youtubeRoutes = require("./routes/youtube");
+const eulaRoutes = require("./routes/eula");
 
 // Express 설정
 const app = express();
@@ -42,6 +43,7 @@ app.use("/games", gamesRoutes);
 app.use("/notify", notificationRoutes);
 app.use("/upload", uploadRoutes);
 app.use("/youtube", youtubeRoutes);
+app.use("/eula", eulaRoutes);
 
 // 서버 시작
 server.listen(PORT, () => {

@@ -216,4 +216,20 @@ router.post("/profile/query/uid", async (req, res) => {
   }
 });
 
+// 8. 토큰 검증 및 UID 반환 API
+router.post("/profile/query/token", (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).send("token-required");
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.status(200).json({ uid: decoded.uid });
+  } catch (error) {
+    res.status(401).send("invalid-token");
+  }
+});
+
 module.exports = router;
