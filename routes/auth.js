@@ -184,51 +184,54 @@ router.get("/profile", authMiddleware, (req, res) => {
   });
 });
 
-// 7. UID 기반으로 프로필 검색
-router.post("/profile/query/uid", async (req, res) => {
-  try {
-    const { uid } = req.body;
+router.post("/profile/query/:method", async (req, res) => {
+  const { method } = req.params;
 
-    if (!uid) {
-      return res.status(400).send("require-uid");
+  // 7. UID 기반으로 프로필 검색
+  if (method === "uid") {
+    try {
+      const { uid } = req.body;
+
+      if (!uid) {
+        return res.status(400).send("require-uid");
+      }
+
+      // username과 email을 동시에 가져오는 쿼리
+      const [rows] = await authDb.query(
+        "SELECT username, email FROM users WHERE uid = ?",
+        [uid]
+      );
+
+      const user = rows[0];
+
+      if (!user) {
+        return res.status(404).json({ message: "failed-query-by-uid" });
+      }
+
+      // 클라이언트에 두 정보 모두 전달
+      res.status(200).json({
+        username: user.username,
+        email: user.email,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send("server-error");
     }
-
-    // username과 email을 동시에 가져오는 쿼리
-    const [rows] = await authDb.query(
-      "SELECT username, email FROM users WHERE uid = ?",
-      [uid]
-    );
-
-    const user = rows[0];
-
-    if (!user) {
-      return res.status(404).json({ message: "failed-query-by-uid" });
-    }
-
-    // 클라이언트에 두 정보 모두 전달
-    res.status(200).json({
-      username: user.username,
-      email: user.email,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("server-error");
   }
-});
+  // 8. 토큰 검증 및 UID 반환 API
+  else if (method === "token") {
+    try {
+      const { token } = req.body;
 
-// 8. 토큰 검증 및 UID 반환 API
-router.post("/profile/query/token", (req, res) => {
-  try {
-    const { token } = req.body;
+      if (!token) {
+        return res.status(400).send("token-required");
+      }
 
-    if (!token) {
-      return res.status(400).send("token-required");
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      res.status(200).json({ uid: decoded.uid });
+    } catch (error) {
+      res.status(401).send("invalid-token");
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    res.status(200).json({ uid: decoded.uid });
-  } catch (error) {
-    res.status(401).send("invalid-token");
   }
 });
 
