@@ -18,6 +18,8 @@
     "multer": "^2.0.2",
     "mysql": "^2.18.1",
     "mysql2": "^3.12.0",
+    "node-media-server": "^4.2.4",
+    "nodemailer": "^7.0.12",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "sequelize": "^6.32.1",

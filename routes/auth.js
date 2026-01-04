@@ -5,6 +5,7 @@ const passport = require("passport"); // Passport 추가
 const GoogleStrategy = require("passport-google-oauth20").Strategy; // 구글 전략 추가
 const { v4: uuidv4 } = require("uuid");
 const { authDb, googleApiKey } = require("../config/db");
+const sendMail = require("../middleware/mail");
 
 const router = express.Router();
 
@@ -33,8 +34,8 @@ passport.use(
           const email = profile.emails?.[0]?.value; // 이메일 추출
 
           await authDb.query(
-            "INSERT INTO users (uid, username, email, google_id) VALUES (?, ?, ?, ?)",
-            [newUid, profile.displayName, email, profile.id]
+            "INSERT INTO users (uid, username, email, google_id, is_verified) VALUES (?, ?, ?, ?, ?)",
+            [newUid, profile.displayName, email, profile.id, 1]
           );
 
           user = {
@@ -89,6 +90,12 @@ router.post("/signup", async (req, res) => {
       return res.status(400).send("require-id-pw");
     }
 
+    // 1. 6자리 인증 번호 생성 및 만료 시간(10분) 설정
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60000);
+
     // 2. 고유 UID 생성
     const newUid = uuidv4();
 
@@ -97,12 +104,30 @@ router.post("/signup", async (req, res) => {
 
     // 3. 사용자 정보 DB에 저장 (uid 컬럼 추가)
     await authDb.query(
-      "INSERT INTO users (uid, username, email, password, isDeveloper, isTeammate) VALUES (?, ?, ?, ?, ?, ?)",
-      [newUid, username, email, hashedPassword, bIsDeveloper, bIsTeammate]
+      "INSERT INTO users (uid, username, email, password, isDeveloper, isTeammate, verification_code, code_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        newUid,
+        username,
+        email,
+        hashedPassword,
+        bIsDeveloper,
+        bIsTeammate,
+        verificationCode,
+        expiresAt,
+      ]
+    );
+
+    // 4. 이메일 발송
+    await sendMail(
+      email,
+      "[Bitmap] 회원가입 인증 번호",
+      `인증 번호는 [${verificationCode}] 입니다. 10분 이내에 입력해 주세요.`
     );
 
     // 응답 시에도 id 대신 uid 반환
-    res.status(201).send({ uid: newUid, username });
+    res
+      .status(201)
+      .send({ uid: newUid, username, message: "verification-code-sent" });
   } catch (error) {
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).send("username-exists");
@@ -133,6 +158,11 @@ router.post("/login", async (req, res) => {
       return res.status(401).send("incorrect-id-pw");
     }
 
+    // 이메일 인증 여부 확인
+    if (!user.is_verified) {
+      return res.status(403).send("email-not-verified");
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -153,6 +183,46 @@ router.post("/login", async (req, res) => {
     );
 
     res.status(200).json({ token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("server-error");
+  }
+});
+
+// 9. 인증 번호 확인 API
+router.post("/verify-code", async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).send("require-email-code");
+    }
+
+    const [rows] = await authDb.query(
+      "SELECT verification_code, code_expires_at FROM users WHERE email = ?",
+      [email]
+    );
+    const user = rows[0];
+
+    if (!user) return res.status(404).send("user-not-found");
+
+    // 번호 일치 여부 확인
+    if (user.verification_code !== code) {
+      return res.status(400).send("invalid-code");
+    }
+
+    // 만료 시간 확인
+    if (new Date() > new Date(user.code_expires_at)) {
+      return res.status(400).send("code-expired");
+    }
+
+    // 인증 완료 처리
+    await authDb.query(
+      "UPDATE users SET verification_code = NULL, code_expires_at = NULL, is_verified = 1 WHERE email = ?",
+      [email]
+    );
+
+    res.status(200).send("verified");
   } catch (error) {
     console.error(error);
     res.status(500).send("server-error");
