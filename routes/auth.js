@@ -194,7 +194,8 @@ router.get("/profile", authMiddleware, (req, res) => {
     username: req.user.username,
     email: req.user.email,
     isAdmin: req.user.isadmin,
-    isDeveloper: req.user.isdeveloper,
+    isDeveloper: req.user.isDeveloper,
+    isTeammate: req.user.isTeammate,
   });
 });
 
