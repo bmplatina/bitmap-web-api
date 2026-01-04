@@ -29,14 +29,21 @@ passport.use(
 
         // 2. 사용자가 없다면 회원가입 처리
         if (!user) {
-          const newUid = uuidv4(); // 2. 고유한 UUID 생성 (예: '1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed')
+          const newUid = uuidv4();
+          const email = profile.emails?.[0]?.value; // 이메일 추출
 
           await authDb.query(
-            "INSERT INTO users (uid, username, google_id) VALUES (?, ?, ?)",
-            [newUid, profile.displayName, profile.id] // 3. uid 컬럼에 저장
+            "INSERT INTO users (uid, username, email, google_id) VALUES (?, ?, ?, ?)",
+            [newUid, profile.displayName, email, profile.id]
           );
 
-          user = { uid: newUid, username: profile.displayName };
+          user = {
+            uid: newUid,
+            username: profile.displayName,
+            email: email,
+            isDeveloper: false,
+            isTeammate: false,
+          };
         }
 
         return done(null, user);
@@ -174,8 +181,13 @@ router.get(
 
     // 3. JWT 토큰 발급 (기존 /login 로직과 동일한 포맷)
     const token = jwt.sign(
-      // { id: req.user.id, username: req.user.username },
-      { uid: req.user.uid, username: req.user.username }, // id -> uid로 변경
+      {
+        uid: req.user.uid,
+        username: req.user.username,
+        email: req.user.email,
+        isDeveloper: req.user.isDeveloper,
+        isTeammate: req.user.isTeammate,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
