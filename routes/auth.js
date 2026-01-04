@@ -134,7 +134,13 @@ router.post("/login", async (req, res) => {
 
     // 4. JWT 생성 시 id 대신 user.uid 사용
     const token = jwt.sign(
-      { uid: user.uid, email: user.email }, // 페이로드 변경
+      {
+        uid: user.uid,
+        email: user.email,
+        username: user.username,
+        isDeveloper: user.isDeveloper,
+        isTeammate: user.isTeammate,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
