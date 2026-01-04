@@ -70,7 +70,13 @@ const authMiddleware = (req, res, next) => {
 // 3. 회원가입 API
 router.post("/signup", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const {
+      username,
+      email,
+      password,
+      bIsDeveloper = false,
+      bIsTeammate = false,
+    } = req.body;
 
     if (!username || !password || !email) {
       return res.status(400).send("require-id-pw");
@@ -84,8 +90,8 @@ router.post("/signup", async (req, res) => {
 
     // 3. 사용자 정보 DB에 저장 (uid 컬럼 추가)
     await authDb.query(
-      "INSERT INTO users (uid, username, email, password) VALUES (?, ?, ?)",
-      [newUid, username, email, hashedPassword]
+      "INSERT INTO users (uid, username, email, password, isDeveloper, isTeammate) VALUES (?, ?, ?, ?, ?, ?)",
+      [newUid, username, email, hashedPassword, bIsDeveloper, bIsTeammate]
     );
 
     // 응답 시에도 id 대신 uid 반환
@@ -94,7 +100,9 @@ router.post("/signup", async (req, res) => {
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).send("username-exists");
     }
+    console.error("============== SIGNUP ERROR ==============");
     console.error(error);
+    console.error("==========================================");
     res.status(500).send("server-error");
   }
 });
