@@ -327,6 +327,7 @@ router.get("/profile", authMiddleware, (req, res) => {
     isAdmin: req.user.isadmin,
     isDeveloper: req.user.isDeveloper,
     isTeammate: req.user.isTeammate,
+    isEmailVerified: req.user.is_verified,
   });
 });
 
