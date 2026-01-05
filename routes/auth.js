@@ -139,6 +139,29 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+// 10. 이메일 중복 확인 API
+router.post("/signup/check-duplicate", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).send("require-email");
+    }
+
+    const [rows] = await authDb.query(
+      "SELECT 1 FROM users WHERE email = ? LIMIT 1",
+      [email]
+    );
+
+    // 데이터가 있으면 중복(false), 없으면 사용 가능(true)
+    const isAvailable = rows.length === 0;
+    res.status(200).json(isAvailable);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("server-error");
+  }
+});
+
 // 4. 로그인 API
 router.post("/login", async (req, res) => {
   try {
@@ -159,9 +182,9 @@ router.post("/login", async (req, res) => {
     }
 
     // 이메일 인증 여부 확인
-    if (!user.is_verified) {
-      return res.status(403).send("email-not-verified");
-    }
+    // if (!user.is_verified) {
+    //   return res.status(403).send("email-not-verified");
+    // }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
