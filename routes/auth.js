@@ -142,7 +142,7 @@ router.post("/signup", async (req, res) => {
 // 4. 로그인 API
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password /* , bKeepLoggedIn */ } = req.body;
 
     if (!email || !password) {
       return res.status(400).send("require-id-pw");
@@ -177,9 +177,10 @@ router.post("/login", async (req, res) => {
         username: user.username,
         isDeveloper: user.isDeveloper,
         isTeammate: user.isTeammate,
+        isEmailVerified: user.is_verified,
       },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      process.env.JWT_SECRET
+      // { expiresIn: bKeepLoggedIn ? "7d" : "1h" }
     );
 
     res.status(200).json({ token });
@@ -190,7 +191,7 @@ router.post("/login", async (req, res) => {
 });
 
 // 9. 인증 번호 확인 API
-router.post("/verify-code", async (req, res) => {
+router.post("/email/verify", async (req, res) => {
   try {
     const { email, code } = req.body;
 
@@ -229,6 +230,54 @@ router.post("/verify-code", async (req, res) => {
   }
 });
 
+// 인증 번호 발송 API
+router.post("/email/send", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).send("require-email");
+    }
+
+    const [rows] = await authDb.query(
+      "SELECT uid, username FROM users WHERE email = ?",
+      [email]
+    );
+    const user = rows[0];
+
+    if (!user) return res.status(404).send("user-not-found");
+
+    // 1. 6자리 인증 번호 생성 및 만료 시간(10분) 설정
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60000);
+
+    // 3. 사용자 정보 DB에 저장 (uid 컬럼 추가)
+    await authDb.query(
+      "UPDATE users SET verification_code = ?, code_expires_at = ? WHERE email = ?",
+      [verificationCode, expiresAt, email]
+    );
+
+    // 4. 이메일 발송
+    await sendMail(
+      email,
+      "[Bitmap] 회원가입 인증 번호",
+      `인증 번호는 [${verificationCode}] 입니다. 10분 이내에 입력해 주세요.`
+    );
+
+    // 응답 시에도 id 대신 uid 반환
+    res.status(201).send({
+      uid: user.uid,
+      username: user.username,
+      message: "verification-code-sent",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("server-error");
+  }
+});
+
 // ==========================================
 // [추가] Google 로그인 라우트
 // ==========================================
@@ -258,8 +307,8 @@ router.get(
         isDeveloper: req.user.isDeveloper,
         isTeammate: req.user.isTeammate,
       },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      process.env.JWT_SECRET
+      // { expiresIn: "1h" }
     );
 
     // 4. 프론트엔드로 리다이렉트 (URL 쿼리 파라미터로 토큰 전달)

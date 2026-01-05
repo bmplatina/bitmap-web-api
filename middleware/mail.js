@@ -1,5 +1,12 @@
 const nodemailer = require("nodemailer");
 
+if (!process.env.ICLOUD_APP_PASSWD) {
+  console.error("========================================================");
+  console.error("❌ [Mail Config] ICLOUD_APP_PASSWD 환경 변수가 없습니다.");
+  console.error("   .env 파일을 확인하거나 환경 변수를 설정해주세요.");
+  console.error("========================================================");
+}
+
 // 이메일 전송 객체 설정
 const transporter = nodemailer.createTransport({
   host: "smtp.mail.me.com",
