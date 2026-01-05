@@ -246,6 +246,7 @@ router.post("/email/send", async (req, res) => {
     const user = rows[0];
 
     if (!user) return res.status(404).send("user-not-found");
+    if (user.is_verified) return res.status(403).send("email-already-verified");
 
     // 1. 6자리 인증 번호 생성 및 만료 시간(10분) 설정
     const verificationCode = Math.floor(
@@ -267,11 +268,7 @@ router.post("/email/send", async (req, res) => {
     );
 
     // 응답 시에도 id 대신 uid 반환
-    res.status(201).send({
-      uid: user.uid,
-      username: user.username,
-      message: "verification-code-sent",
-    });
+    res.status(201).send("email-sent");
   } catch (error) {
     console.error(error);
     res.status(500).send("server-error");
