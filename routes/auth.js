@@ -44,6 +44,7 @@ passport.use(
             email: email,
             isDeveloper: false,
             isTeammate: false,
+            isEmailVerified: true,
           };
         }
 
@@ -326,6 +327,7 @@ router.get(
         email: req.user.email,
         isDeveloper: req.user.isDeveloper,
         isTeammate: req.user.isTeammate,
+        isEmailVerified: req.user.is_verified,
       },
       process.env.JWT_SECRET
       // { expiresIn: "1h" }
