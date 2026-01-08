@@ -9,26 +9,27 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcryptjs": "^3.0.2",
+    "bcryptjs": "^3.0.3",
     "body-parser": "1.20.3",
     "express": "5.0.0",
     "googleapis": "^169.0.0",
     "http": "^0.0.1-security",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "mysql": "^2.18.1",
-    "mysql2": "^3.12.0",
+    "mysql2": "^3.16.0",
     "node-media-server": "^4.2.4",
     "nodemailer": "^7.0.12",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "sequelize": "^6.32.1",
+    "sequelize": "^6.37.7",
     "uuid": "^13.0.0",
-    "ws": "^8.18.3"
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.6.1"
   },
-  "description": ""
+  "description": "",
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
