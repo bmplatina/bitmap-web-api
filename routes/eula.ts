@@ -1,14 +1,15 @@
-const express = require("express");
-const { authDb } = require("../config/db");
+import express, { Request, Response } from "express";
+import { authDb } from "@/config/db";
+import { Game } from "@/config/types";
 
 const router = express.Router();
 
-router.get("/:title", async (req, res) => {
+router.get("/:title", async (req: Request, res: Response) => {
   const { title } = req.params;
 
   try {
     // 1. [rows] 형태로 받아야 실제 데이터 배열에 접근할 수 있습니다.
-    const [rows] = await authDb.query(
+    const [rows] = await authDb.query<Game[]>(
       "SELECT ko, en FROM EULA WHERE title = ?",
       [title]
     );
@@ -31,4 +32,4 @@ router.get("/:title", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

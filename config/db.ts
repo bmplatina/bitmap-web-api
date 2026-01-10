@@ -1,6 +1,6 @@
-const { youtube } = require("googleapis/build/src/apis/youtube");
-const mysql = require("mysql2/promise");
-require("dotenv").config();
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
+dotenv.config();
 
 // MySQL 연결 풀 설정
 const gameDb = mysql.createPool({
@@ -29,4 +29,4 @@ const googleApiKey = {
   youtubeApiKey: process.env.YOUTUBE_API_KEY,
 };
 
-module.exports = { gameDb, authDb, googleApiKey };
+export { gameDb, authDb, googleApiKey };

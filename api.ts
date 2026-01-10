@@ -2,19 +2,20 @@
 // Coded by Platina
 
 // 서버 모듈
-const express = require("express");
-const http = require("http");
-const cors = require("cors");
-require("dotenv").config();
+import express from "express";
+import http from "http";
+import cors from "cors";
+import dotenv from "dotenv";
+dotenv.config();
 
 // 커스텀 모듈
-const { initializeWebSocket } = require("./websockets/websocketHandler");
-const authRoutes = require("./routes/auth");
-const gamesRoutes = require("./routes/games");
-const notificationRoutes = require("./routes/notifications");
-const uploadRoutes = require("./routes/upload");
-const youtubeRoutes = require("./routes/youtube");
-const eulaRoutes = require("./routes/eula");
+import { initializeWebSocket } from "@/websockets/websocketHandler";
+import authRoutes from "@/routes/auth";
+import gamesRoutes from "@/routes/games";
+import notificationRoutes from "@/routes/notifications";
+import uploadRoutes from "@/routes/upload";
+import youtubeRoutes from "@/routes/youtube";
+import eulaRoutes from "@/routes/eula";
 
 // Express 설정
 const app = express();

@@ -1,11 +1,13 @@
-const express = require("express");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const passport = require("passport"); // Passport 추가
-const GoogleStrategy = require("passport-google-oauth20").Strategy; // 구글 전략 추가
-const { v4: uuidv4 } = require("uuid");
-const { authDb, googleApiKey } = require("../config/db");
-const sendMail = require("../middleware/mail");
+import express, { Request, Response } from "express";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import passport from "passport"; // Passport 추가
+import { Strategy as GoogleStrategy } from "passport-google-oauth20"; // 구글 전략 추가
+import { v4 as uuidv4 } from "uuid";
+import { authDb, googleApiKey } from "@/config/db";
+import sendMail from "@/middleware/mail";
+import { User } from "@/config/types";
+import { authMiddleware } from "@/middleware/auth";
 
 const router = express.Router();
 
@@ -22,7 +24,7 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         // 1. 구글 ID로 기존 사용자 검색
-        const [rows] = await authDb.query(
+        const [rows] = await authDb.query<User[]>(
           "SELECT * FROM users WHERE google_id = ?",
           [profile.id]
         );
@@ -31,53 +33,29 @@ passport.use(
         // 2. 사용자가 없다면 회원가입 처리
         if (!user) {
           const newUid = uuidv4();
-          const email = profile.emails?.[0]?.value; // 이메일 추출
+          const email = profile.emails?.[0]?.value ?? ""; // 이메일 추출
 
-          await authDb.query(
-            "INSERT INTO users (uid, username, email, google_id, is_verified) VALUES (?, ?, ?, ?, ?)",
+          await authDb.query<User[]>(
+            "INSERT INTO users (uid, username, email, google_id, isVerified) VALUES (?, ?, ?, ?, ?)",
             [newUid, profile.displayName, email, profile.id, 1]
           );
 
-          user = {
-            uid: newUid,
-            username: profile.displayName,
-            email: email,
-            isDeveloper: false,
-            isTeammate: false,
-            isEmailVerified: true,
-          };
-        }
+          const [createdAccountQuery] = await authDb.query<User[]>(
+            "SELECT * FROM users WHERE google_id = ?",
+            [profile.id]
+          );
 
-        return done(null, user);
+          return done(null, createdAccountQuery[0]);
+        }
       } catch (error) {
-        return done(error, null);
+        return done(error, undefined);
       }
     }
   )
 );
 
-// ==========================================
-// 기존 미들웨어 및 라우트
-// ==========================================
-
-// 5. 인증 미들웨어 (기존 코드 유지)
-const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).send("token-required");
-  }
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    res.status(401).send("invalid-token");
-  }
-};
-
 // 3. 회원가입 API
-router.post("/signup", async (req, res) => {
+router.post("/signup", async (req: Request, res: Response) => {
   try {
     const {
       username,
@@ -126,17 +104,17 @@ router.post("/signup", async (req, res) => {
     );
 
     // 응답 시에도 id 대신 uid 반환
-    res
+    return res
       .status(201)
       .send({ uid: newUid, username, message: "verification-code-sent" });
-  } catch (error) {
+  } catch (error: any) {
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).send("username-exists");
     }
     console.error("============== SIGNUP ERROR ==============");
     console.error(error);
     console.error("==========================================");
-    res.status(500).send("server-error");
+    return res.status(500).send("server-error");
   }
 });
 
@@ -149,17 +127,17 @@ router.post("/signup/check-duplicate", async (req, res) => {
       return res.status(400).send("require-email");
     }
 
-    const [rows] = await authDb.query(
+    const [rows]: any = await authDb.query(
       "SELECT 1 FROM users WHERE email = ? LIMIT 1",
       [email]
     );
 
     // 데이터가 있으면 중복(false), 없으면 사용 가능(true)
     const isAvailable = rows.length === 0;
-    res.status(200).json(isAvailable);
+    return res.status(200).json(isAvailable);
   } catch (error) {
     console.error(error);
-    res.status(500).send("server-error");
+    return res.status(500).send("server-error");
   }
 });
 
@@ -173,9 +151,10 @@ router.post("/login", async (req, res) => {
     }
 
     // 사용자 조회 (조회 시 uid를 가져오는지 확인)
-    const [rows] = await authDb.query("SELECT * FROM users WHERE email = ?", [
-      email,
-    ]);
+    const [rows] = await authDb.query<User[]>(
+      "SELECT * FROM users WHERE email = ?",
+      [email]
+    );
     const user = rows[0];
 
     if (!user) {
@@ -183,7 +162,7 @@ router.post("/login", async (req, res) => {
     }
 
     // 이메일 인증 여부 확인
-    // if (!user.is_verified) {
+    // if (!user.isVerified) {
     //   return res.status(403).send("email-not-verified");
     // }
 
@@ -191,6 +170,11 @@ router.post("/login", async (req, res) => {
 
     if (!isMatch) {
       return res.status(401).send("incorrect-id-pw");
+    }
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(500).send("server-configuration-error");
     }
 
     // 4. JWT 생성 시 id 대신 user.uid 사용
@@ -201,16 +185,16 @@ router.post("/login", async (req, res) => {
         username: user.username,
         isDeveloper: user.isDeveloper,
         isTeammate: user.isTeammate,
-        isEmailVerified: user.is_verified,
+        isEmailVerified: user.isVerified,
       },
-      process.env.JWT_SECRET
+      secret
       // { expiresIn: bKeepLoggedIn ? "7d" : "1h" }
     );
 
-    res.status(200).json({ token });
+    return res.status(200).json({ token });
   } catch (error) {
     console.error(error);
-    res.status(500).send("server-error");
+    return res.status(500).send("server-error");
   }
 });
 
@@ -223,7 +207,7 @@ router.post("/email/verify", async (req, res) => {
       return res.status(400).send("require-email-code");
     }
 
-    const [rows] = await authDb.query(
+    const [rows] = await authDb.query<User[]>(
       "SELECT verification_code, code_expires_at FROM users WHERE email = ?",
       [email]
     );
@@ -242,15 +226,15 @@ router.post("/email/verify", async (req, res) => {
     }
 
     // 인증 완료 처리
-    await authDb.query(
-      "UPDATE users SET verification_code = NULL, code_expires_at = NULL, is_verified = 1 WHERE email = ?",
+    await authDb.query<User[]>(
+      "UPDATE users SET verification_code = NULL, code_expires_at = NULL, isVerified = 1 WHERE email = ?",
       [email]
     );
 
-    res.status(200).send("verified");
+    return res.status(200).send("verified");
   } catch (error) {
     console.error(error);
-    res.status(500).send("server-error");
+    return res.status(500).send("server-error");
   }
 });
 
@@ -263,14 +247,14 @@ router.post("/email/send", async (req, res) => {
       return res.status(400).send("require-email");
     }
 
-    const [rows] = await authDb.query(
+    const [rows] = await authDb.query<User[]>(
       "SELECT uid, username FROM users WHERE email = ?",
       [email]
     );
     const user = rows[0];
 
     if (!user) return res.status(404).send("user-not-found");
-    if (user.is_verified) return res.status(403).send("email-already-verified");
+    if (user.isVerified) return res.status(403).send("email-already-verified");
 
     // 1. 6자리 인증 번호 생성 및 만료 시간(10분) 설정
     const verificationCode = Math.floor(
@@ -292,10 +276,10 @@ router.post("/email/send", async (req, res) => {
     );
 
     // 응답 시에도 id 대신 uid 반환
-    res.status(201).send("email-sent");
+    return res.status(201).send("email-sent");
   } catch (error) {
     console.error(error);
-    res.status(500).send("server-error");
+    return res.status(500).send("server-error");
   }
 });
 
@@ -319,37 +303,44 @@ router.get(
   (req, res) => {
     // passport 전략(Strategy)이 성공하면 req.user에 사용자 정보가 담겨 있음
 
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(500).send("server-configuration-error");
+    }
+
+    const user = req.user as User;
+
     // 3. JWT 토큰 발급 (기존 /login 로직과 동일한 포맷)
     const token = jwt.sign(
       {
-        uid: req.user.uid,
-        username: req.user.username,
-        email: req.user.email,
-        isDeveloper: req.user.isDeveloper,
-        isTeammate: req.user.isTeammate,
-        isEmailVerified: req.user.is_verified,
+        uid: user.uid,
+        username: user.username,
+        email: user.email,
+        isDeveloper: user.isDeveloper,
+        isTeammate: user.isTeammate,
+        isEmailVerified: user.isVerified,
       },
-      process.env.JWT_SECRET
+      secret
       // { expiresIn: "1h" }
     );
 
     // 4. 프론트엔드로 리다이렉트 (URL 쿼리 파라미터로 토큰 전달)
-    // 주의: 실제 배포 시에는 보안을 위해 쿠키나 다른 방법을 고려해야 할 수 있습니다.
     const frontendUrl = process.env.FRONTEND_URL || "https://prodbybitmap.com";
-    res.redirect(`${frontendUrl}?token=${token}`);
+    return res.redirect(`${frontendUrl}?token=${token}`);
   }
 );
 
 // 6. 보호된 라우트 (기존 코드 유지)
 router.get("/profile", authMiddleware, (req, res) => {
-  res.json({
-    uid: req.user.uid,
-    username: req.user.username,
-    email: req.user.email,
-    isAdmin: req.user.isadmin,
-    isDeveloper: req.user.isDeveloper,
-    isTeammate: req.user.isTeammate,
-    isEmailVerified: req.user.is_verified,
+  const user = (req as any).user;
+  return res.json({
+    uid: user.uid,
+    username: user.username,
+    email: user.email,
+    isAdmin: user.isadmin,
+    isDeveloper: user.isDeveloper,
+    isTeammate: user.isTeammate,
+    isEmailVerified: user.isVerified,
   });
 });
 
@@ -366,7 +357,7 @@ router.post("/profile/query/:method", async (req, res) => {
       }
 
       // username과 email을 동시에 가져오는 쿼리
-      const [rows] = await authDb.query(
+      const [rows] = await authDb.query<User[]>(
         "SELECT username, email FROM users WHERE uid = ?",
         [uid]
       );
@@ -378,13 +369,13 @@ router.post("/profile/query/:method", async (req, res) => {
       }
 
       // 클라이언트에 두 정보 모두 전달
-      res.status(200).json({
+      return res.status(200).json({
         username: user.username,
         email: user.email,
       });
     } catch (error) {
       console.error(error);
-      res.status(500).send("server-error");
+      return res.status(500).send("server-error");
     }
   }
   // 8. 토큰 검증 및 UID 반환 API
@@ -396,12 +387,18 @@ router.post("/profile/query/:method", async (req, res) => {
         return res.status(400).send("token-required");
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      res.status(200).json({ uid: decoded.uid });
+      const secret = process.env.JWT_SECRET;
+      if (!secret) {
+        return res.status(500).send("server-configuration-error");
+      }
+
+      const decoded = jwt.verify(token, secret) as any;
+      return res.status(200).json({ uid: decoded.uid });
     } catch (error) {
-      res.status(401).send("invalid-token");
+      return res.status(401).send("invalid-token");
     }
   }
+  return res.status(400).send("invalid-method");
 });
 
-module.exports = router;
+export default router;

@@ -1,13 +1,19 @@
-const express = require("express");
-const multer = require("multer");
-const path = require("path");
+import express, { Request, Response } from "express";
+import multer, { FileFilterCallback } from "multer";
+import path from "path";
+import fs from "fs";
 
-const verifyToken = require("../middleware/auth"); // 인증 미들웨어 임포트
+import { verifyToken } from "@/middleware/auth"; // 인증 미들웨어 임포트
+import { User } from "@/config/types";
 
 const router = express.Router();
 
 // 이미지 파일 검증 로직 (확장자 체크)
-const fileFilterImage = (req, file, cb) => {
+const fileFilterImage = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback
+) => {
   // 허용할 확장자 정규식
   const allowedTypes = /jpeg|jpg|png/;
   // 파일 확장자 확인
@@ -21,19 +27,25 @@ const fileFilterImage = (req, file, cb) => {
     return cb(null, true);
   } else {
     // 거부 시 에러 메시지 전달
-    cb(
-      new Error("지원되지 않는 파일 형식입니다. (png, jpg, jpeg만 가능)"),
+    return cb(
+      new Error(
+        "지원되지 않는 파일 형식입니다. (png, jpg, jpeg만 가능)"
+      ) as any,
       false
     );
   }
 };
 
 const uploadImage = multer({
-  storageImage: multer.diskStorage({
+  storage: multer.diskStorage({
     destination: (req, file, cb) => {
       // 여기에 저장하고 싶은 경로를 입력합니다.
       // 주의: 해당 폴더가 서버에 미리 생성되어 있어야 합니다.
-      cb(null, "uploads/images/");
+      const dir = "uploads/images/";
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      cb(null, dir);
     },
     filename: (req, file, cb) => {
       // 파일명 저장 방식 (중복 방지를 위해 타임스탬프 추가 권장)
@@ -50,7 +62,11 @@ const uploadImage = multer({
   },
 });
 
-const fileFilterGameBinary = (req, file, cb) => {
+const fileFilterGameBinary = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback
+) => {
   // 허용할 확장자 정규식
   const allowedTypes = /zip|exe|app/;
   // 파일 확장자 확인
@@ -64,19 +80,23 @@ const fileFilterGameBinary = (req, file, cb) => {
     return cb(null, true);
   } else {
     // 거부 시 에러 메시지 전달
-    cb(
-      new Error("지원되지 않는 파일 형식입니다. (zip, exe, app만 가능)"),
+    return cb(
+      new Error("지원되지 않는 파일 형식입니다. (zip, exe, app만 가능)") as any,
       false
     );
   }
 };
 
 const uploadGameBinary = multer({
-  storageImage: multer.diskStorage({
+  storage: multer.diskStorage({
     destination: (req, file, cb) => {
       // 여기에 저장하고 싶은 경로를 입력합니다.
       // 주의: 해당 폴더가 서버에 미리 생성되어 있어야 합니다.
-      cb(null, "uploads/games/");
+      const dir = "uploads/games/";
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      cb(null, dir);
     },
     filename: (req, file, cb) => {
       // 파일명 저장 방식 (중복 방지를 위해 타임스탬프 추가 권장)
@@ -93,46 +113,46 @@ const uploadGameBinary = multer({
   },
 });
 
-router.post("/game/image", verifyToken, (req, res) => {
+router.post("/game/image", verifyToken, (req: Request, res: Response) => {
   const singleUpload = uploadImage.single("image");
 
   singleUpload(req, res, (err) => {
-    // 1~3번 에러 핸들링 로직은 기존과 동일하게 유지
-
     if (err) return res.status(400).json({ message: err.message });
     if (!req.file)
       return res.status(400).json({ message: "파일을 선택해주세요." });
 
-    // 추가: 인증된 유저의 정보를 활용할 수 있습니다.
-    console.log("업로드한 유저 정보:", req.user);
+    const user = (req as any).user as User;
 
-    res.status(200).json({
+    // 추가: 인증된 유저의 정보를 활용할 수 있습니다.
+    console.log("업로드한 유저 정보:", user);
+
+    return res.status(200).json({
       message: "업로드 성공!",
-      filePath: `/uploads/${req.file.filename}`,
-      uploaderId: req.user.id, // 응답에 포함하거나 DB 저장 시 활용
+      filePath: `/uploads/images/${req.file.filename}`,
+      uploaderUid: user.uid,
     });
   });
 });
 
-router.post("/game/binary", verifyToken, (req, res) => {
-  const singleUpload = uploadGameBinary.single("image");
+router.post("/game/binary", verifyToken, (req: Request, res: Response) => {
+  const singleUpload = uploadGameBinary.single("binary"); // 클라이언트 필드명 'binary'로 가정
 
   singleUpload(req, res, (err) => {
-    // 1~3번 에러 핸들링 로직은 기존과 동일하게 유지
-
     if (err) return res.status(400).json({ message: err.message });
     if (!req.file)
       return res.status(400).json({ message: "파일을 선택해주세요." });
 
-    // 추가: 인증된 유저의 정보를 활용할 수 있습니다.
-    console.log("업로드한 유저 정보:", req.user);
+    const user = (req as any).user as User;
 
-    res.status(200).json({
+    // 추가: 인증된 유저의 정보를 활용할 수 있습니다.
+    console.log("업로드한 유저 정보:", user);
+
+    return res.status(200).json({
       message: "업로드 성공!",
-      filePath: `/uploads/${req.file.filename}`,
-      uploaderId: req.user.id, // 응답에 포함하거나 DB 저장 시 활용
+      filePath: `/uploads/games/${req.file.filename}`,
+      uploaderUid: user.uid,
     });
   });
 });
 
-module.exports = router;
+export default router;

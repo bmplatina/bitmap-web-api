@@ -1,17 +1,27 @@
-const { WebSocketServer } = require("ws");
+import { WebSocketServer, WebSocket } from "ws";
+import { Server } from "http";
 
-const userConnections = new Map(); // userId와 ws 연결을 매핑
+interface Data {
+  type: string;
+  userId: string;
+}
 
-function initializeWebSocket(server) {
+interface ExtendedWebSocket extends WebSocket {
+  userId?: string;
+}
+
+const userConnections = new Map<string, ExtendedWebSocket>(); // userId와 ws 연결을 매핑
+
+function initializeWebSocket(server: Server) {
   const wss = new WebSocketServer({ server }); // HTTP 서버에 WebSocket 서버 연결
 
-  wss.on("connection", (ws) => {
+  wss.on("connection", (ws: ExtendedWebSocket) => {
     console.log("✅ 클라이언트가 연결되었습니다. 사용자 ID를 기다리는 중...");
 
     // 클라이언트로부터 첫 메시지(사용자 ID 등록)를 기다림
-    ws.once("message", (message) => {
+    ws.once("message", (message: string) => {
       try {
-        const data = JSON.parse(message);
+        const data: Data = JSON.parse(message);
         // 메시지 타입이 'register'이고 userId가 있는지 확인
         if (data.type === "register" && data.userId) {
           const userId = data.userId;
@@ -21,14 +31,10 @@ function initializeWebSocket(server) {
 
           // 사용자 ID 등록 후의 일반 메시지 핸들러
           ws.on("message", (regularMessage) => {
-            console.log(
-              `'${ws.userId}'로부터 메시지 수신: ${regularMessage}`
-            );
+            console.log(`'${ws.userId}'로부터 메시지 수신: ${regularMessage}`);
           });
         } else {
-          console.log(
-            "[오류] 잘못된 등록 메시지입니다. 연결을 종료합니다."
-          );
+          console.log("[오류] 잘못된 등록 메시지입니다. 연결을 종료합니다.");
           ws.close();
         }
       } catch (error) {
@@ -61,10 +67,10 @@ function initializeWebSocket(server) {
 }
 
 // 특정 사용자에게 메시지를 보내는 함수
-function sendToUser(userId, message) {
+function sendToUser(userId: string, message: string) {
   const userSocket = userConnections.get(String(userId));
 
-  if (userSocket && userSocket.readyState === userSocket.OPEN) {
+  if (userSocket && userSocket.readyState === WebSocket.OPEN) {
     console.log(`'${userId}'에게 메시지 발송: ${message}`);
     userSocket.send(message);
     return true; // 전송 성공
@@ -74,4 +80,4 @@ function sendToUser(userId, message) {
   }
 }
 
-module.exports = { initializeWebSocket, sendToUser, userConnections };
+export { initializeWebSocket, sendToUser, userConnections };

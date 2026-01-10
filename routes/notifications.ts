@@ -1,10 +1,10 @@
-const express = require("express");
-const { sendToUser } = require("../websockets/websocketHandler");
+import express, { Request, Response } from "express";
+import { sendToUser } from "@/websockets/websocketHandler";
 
 const router = express.Router();
 
 // 특정 사용자에게 알림을 보내는 API 엔드포인트
-router.post("/:userId", (req, res) => {
+router.post("/:userId", (req: Request, res: Response) => {
   const { userId } = req.params;
   const { title, body } = req.body;
 
@@ -28,4 +28,4 @@ router.post("/:userId", (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
