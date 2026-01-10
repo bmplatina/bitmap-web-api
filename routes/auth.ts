@@ -11,6 +11,22 @@ import { authMiddleware } from "@/middleware/auth";
 
 const router = express.Router();
 
+async function sendVerificationMail(
+  locale: string,
+  email: string,
+  verificationCode: string
+) {
+  const title =
+    locale === "ko"
+      ? "[Bitmap] 회원가입 인증 번호"
+      : "[Bitmap] Verification Code for Sign Up";
+  const message =
+    locale === "ko"
+      ? `인증 번호는 [${verificationCode}] 입니다. 10분 이내에 입력해 주세요.`
+      : `Your verification code is [${verificationCode}]. Please enter it within 10 minutes.`;
+  await sendMail(email, title, message);
+}
+
 // ==========================================
 // [추가] Passport Google Strategy 설정
 // ==========================================
@@ -58,6 +74,7 @@ passport.use(
 router.post("/signup", async (req: Request, res: Response) => {
   try {
     const {
+      locale = "ko",
       username,
       email,
       password,
@@ -97,11 +114,7 @@ router.post("/signup", async (req: Request, res: Response) => {
     );
 
     // 4. 이메일 발송
-    await sendMail(
-      email,
-      "[Bitmap] 회원가입 인증 번호",
-      `인증 번호는 [${verificationCode}] 입니다. 10분 이내에 입력해 주세요.`
-    );
+    await sendVerificationMail(locale, email, verificationCode);
 
     // 응답 시에도 id 대신 uid 반환
     return res
@@ -241,9 +254,10 @@ router.post("/email/verify", authMiddleware, async (req, res) => {
 });
 
 // 인증 번호 발송 API
-router.get("/email/send", authMiddleware, async (req, res) => {
+router.post("/email/send", authMiddleware, async (req, res) => {
   const jwtUser = (req as any).user;
   try {
+    const { locale = "ko" } = req.body;
     const email = jwtUser.email;
 
     if (!email) {
@@ -272,11 +286,7 @@ router.get("/email/send", authMiddleware, async (req, res) => {
     );
 
     // 4. 이메일 발송
-    await sendMail(
-      email,
-      "[Bitmap] 회원가입 인증 번호",
-      `인증 번호는 [${verificationCode}] 입니다. 10분 이내에 입력해 주세요.`
-    );
+    await sendVerificationMail(locale, email, verificationCode);
 
     // 응답 시에도 id 대신 uid 반환
     return res.status(201).send("email-sent");
