@@ -241,7 +241,7 @@ router.post("/email/verify", authMiddleware, async (req, res) => {
 });
 
 // 인증 번호 발송 API
-router.post("/email/send", authMiddleware, async (req, res) => {
+router.get("/email/send", authMiddleware, async (req, res) => {
   const jwtUser = (req as any).user;
   try {
     const email = jwtUser.email;
