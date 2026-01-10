@@ -29,8 +29,13 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     if (!secret) {
       return res.status(500).send("server-configuration-error");
     }
-    const decoded = jwt.verify(token, secret);
-    (req as any).user = decoded;
+    if (token === process.env.MASTER_TOKEN) {
+      (req as any).user = "Master";
+    } else {
+      const decoded = jwt.verify(token, secret);
+      (req as any).user = decoded;
+    }
+
     next();
   } catch (error) {
     return res.status(401).send("invalid-token");

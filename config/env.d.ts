@@ -14,6 +14,7 @@ declare global {
       JWT_SECRET: string;
       ICLOUD_APP_PASSWD: string;
       ICLOUD_EMAIL: string;
+      MASTER_TOKEN: string;
     }
   }
 }
