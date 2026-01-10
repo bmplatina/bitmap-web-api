@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import { gameDb } from "@/config/db";
 import { Game } from "@/config/types";
 import { ResultSetHeader } from "mysql2";
+import { authMiddleware } from "@/middleware/auth";
 
 const router = express.Router();
 
@@ -28,7 +29,7 @@ router.get("/pending", async (req: Request, res: Response) => {
 });
 
 // 데이터 삽입 API
-router.post("/submit", async (req: Request, res: Response) => {
+router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
   const newGame = req.body;
 
   try {

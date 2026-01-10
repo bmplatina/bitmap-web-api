@@ -144,7 +144,7 @@ router.post("/signup/check-duplicate", async (req, res) => {
 // 4. 로그인 API
 router.post("/login", async (req, res) => {
   try {
-    const { email, password /* , bKeepLoggedIn */ } = req.body;
+    const { email, password, bKeepLoggedIn } = req.body;
 
     if (!email || !password) {
       return res.status(400).send("require-id-pw");
@@ -187,8 +187,8 @@ router.post("/login", async (req, res) => {
         isTeammate: user.isTeammate,
         isEmailVerified: user.isVerified,
       },
-      secret
-      // { expiresIn: bKeepLoggedIn ? "7d" : "1h" }
+      secret,
+      { expiresIn: bKeepLoggedIn ? "30d" : "6h" }
     );
 
     return res.status(200).json({ token });
@@ -199,9 +199,11 @@ router.post("/login", async (req, res) => {
 });
 
 // 9. 인증 번호 확인 API
-router.post("/email/verify", async (req, res) => {
+router.post("/email/verify", authMiddleware, async (req, res) => {
+  const jwtUser = (req as any).user;
   try {
-    const { email, code } = req.body;
+    const { code } = req.body;
+    const email = jwtUser.email;
 
     if (!email || !code) {
       return res.status(400).send("require-email-code");
@@ -239,9 +241,10 @@ router.post("/email/verify", async (req, res) => {
 });
 
 // 인증 번호 발송 API
-router.post("/email/send", async (req, res) => {
+router.post("/email/send", authMiddleware, async (req, res) => {
+  const jwtUser = (req as any).user;
   try {
-    const { email } = req.body;
+    const email = jwtUser.email;
 
     if (!email) {
       return res.status(400).send("require-email");
@@ -344,7 +347,7 @@ router.get("/profile", authMiddleware, (req, res) => {
   });
 });
 
-router.post("/profile/query/:method", async (req, res) => {
+router.post("/profile/query/:method", authMiddleware, async (req, res) => {
   const { method } = req.params;
 
   // 7. UID 기반으로 프로필 검색
