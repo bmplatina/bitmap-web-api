@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import passport from "passport"; // Passport 추가
 import { Strategy as GoogleStrategy } from "passport-google-oauth20"; // 구글 전략 추가
 import { v4 as uuidv4 } from "uuid";
-import { authDb, googleApiKey } from "@/config/db";
+import { bitmapDb, googleApiKey } from "@/config/db";
 import sendMail from "@/middleware/mail";
 import { User } from "@/config/types";
 import { authMiddleware } from "@/middleware/auth";
@@ -40,7 +40,7 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         // 1. 구글 ID로 기존 사용자 검색
-        const [rows] = await authDb.query<User[]>(
+        const [rows] = await bitmapDb.query<User[]>(
           "SELECT * FROM users WHERE google_id = ?",
           [profile.id]
         );
@@ -51,12 +51,12 @@ passport.use(
           const newUid = uuidv4();
           const email = profile.emails?.[0]?.value ?? ""; // 이메일 추출
 
-          await authDb.query<User[]>(
+          await bitmapDb.query<User[]>(
             "INSERT INTO users (uid, username, email, google_id, isVerified) VALUES (?, ?, ?, ?, ?)",
             [newUid, profile.displayName, email, profile.id, 1]
           );
 
-          const [createdAccountQuery] = await authDb.query<User[]>(
+          const [createdAccountQuery] = await bitmapDb.query<User[]>(
             "SELECT * FROM users WHERE google_id = ?",
             [profile.id]
           );
@@ -99,7 +99,7 @@ router.post("/signup", async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // 3. 사용자 정보 DB에 저장 (uid 컬럼 추가)
-    await authDb.query(
+    await bitmapDb.query(
       "INSERT INTO users (uid, username, email, password, isDeveloper, isTeammate, verification_code, code_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       [
         newUid,
@@ -140,7 +140,7 @@ router.post("/signup/check-duplicate", async (req, res) => {
       return res.status(400).send("require-email");
     }
 
-    const [rows]: any = await authDb.query(
+    const [rows]: any = await bitmapDb.query(
       "SELECT 1 FROM users WHERE email = ? LIMIT 1",
       [email]
     );
@@ -164,7 +164,7 @@ router.post("/login", async (req, res) => {
     }
 
     // 사용자 조회 (조회 시 uid를 가져오는지 확인)
-    const [rows] = await authDb.query<User[]>(
+    const [rows] = await bitmapDb.query<User[]>(
       "SELECT * FROM users WHERE email = ?",
       [email]
     );
@@ -222,7 +222,7 @@ router.post("/email/verify", authMiddleware, async (req, res) => {
       return res.status(400).send("require-email-code");
     }
 
-    const [rows] = await authDb.query<User[]>(
+    const [rows] = await bitmapDb.query<User[]>(
       "SELECT verification_code, code_expires_at FROM users WHERE email = ?",
       [email]
     );
@@ -241,7 +241,7 @@ router.post("/email/verify", authMiddleware, async (req, res) => {
     }
 
     // 인증 완료 처리
-    await authDb.query<User[]>(
+    await bitmapDb.query<User[]>(
       "UPDATE users SET verification_code = NULL, code_expires_at = NULL, isVerified = 1 WHERE email = ?",
       [email]
     );
@@ -264,7 +264,7 @@ router.post("/email/send", authMiddleware, async (req, res) => {
       return res.status(400).send("require-email");
     }
 
-    const [rows] = await authDb.query<User[]>(
+    const [rows] = await bitmapDb.query<User[]>(
       "SELECT uid, username FROM users WHERE email = ?",
       [email]
     );
@@ -280,7 +280,7 @@ router.post("/email/send", authMiddleware, async (req, res) => {
     const expiresAt = new Date(Date.now() + 10 * 60000);
 
     // 3. 사용자 정보 DB에 저장 (uid 컬럼 추가)
-    await authDb.query(
+    await bitmapDb.query(
       "UPDATE users SET verification_code = ?, code_expires_at = ? WHERE email = ?",
       [verificationCode, expiresAt, email]
     );
@@ -370,7 +370,7 @@ router.post("/profile/query/:method", authMiddleware, async (req, res) => {
       }
 
       // username과 email을 동시에 가져오는 쿼리
-      const [rows] = await authDb.query<User[]>(
+      const [rows] = await bitmapDb.query<User[]>(
         "SELECT username, email FROM users WHERE uid = ?",
         [uid]
       );
