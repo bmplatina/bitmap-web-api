@@ -1,4 +1,4 @@
-import type jwt from "jsonwebtoken";
+import type { JwtPayload } from "jsonwebtoken";
 
 // env.d.ts
 declare global {
@@ -19,11 +19,7 @@ declare global {
       MASTER_TOKEN: string;
     }
   }
-  namespace Express {
-    interface Request {
-      user?: string | jwt.JwtPayload;
-    }
-  }
+  namespace Express {}
 }
 
 export {};

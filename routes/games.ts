@@ -33,8 +33,12 @@ router.get("/pending", async (req: Request, res: Response) => {
 // 데이터 삽입 API
 router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
   const newGame = req.body;
+  const jwtUser = (req as any).user;
 
   try {
+    if (!jwtUser.isDeveloper) {
+      throw Error("not-developer");
+    }
     const [result] = await bitmapDb.query<ResultSetHeader>(
       "INSERT INTO games_pending_list SET ?",
       [newGame]
