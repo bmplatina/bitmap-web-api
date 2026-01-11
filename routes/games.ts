@@ -9,7 +9,7 @@ const router = express.Router();
 // 모든 게임 데이터 가져오기 API
 router.get("/released", async (req: Request, res: Response) => {
   try {
-    const [results] = await bitmapDb.query("SELECT * FROM Games");
+    const [results] = await bitmapDb.query("SELECT * FROM games_list");
     res.json(results);
   } catch (err) {
     console.error("데이터 조회 중 오류:", err);
@@ -20,7 +20,9 @@ router.get("/released", async (req: Request, res: Response) => {
 // 등록을 대기 중인 게임
 router.get("/pending", async (req: Request, res: Response) => {
   try {
-    const [results] = await bitmapDb.query<Game[]>("SELECT * FROM GamesPending");
+    const [results] = await bitmapDb.query<Game[]>(
+      "SELECT * FROM games_pending_list"
+    );
     res.json(results);
   } catch (err) {
     console.error("데이터 조회 중 오류:", err);
@@ -34,7 +36,7 @@ router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
 
   try {
     const [result] = await bitmapDb.query<ResultSetHeader>(
-      "INSERT INTO GamesPending SET ?",
+      "INSERT INTO games_pending_list SET ?",
       [newGame]
     );
     res.json({

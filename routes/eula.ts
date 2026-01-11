@@ -10,7 +10,7 @@ router.get("/:title", async (req: Request, res: Response) => {
   try {
     // 1. [rows] 형태로 받아야 실제 데이터 배열에 접근할 수 있습니다.
     const [rows] = await bitmapDb.query<Game[]>(
-      "SELECT ko, en FROM EULA WHERE title = ?",
+      "SELECT ko, en FROM eula WHERE title = ?",
       [title]
     );
 

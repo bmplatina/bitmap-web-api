@@ -1,3 +1,5 @@
+import type jwt from "jsonwebtoken";
+
 // env.d.ts
 declare global {
   namespace NodeJS {
@@ -15,6 +17,11 @@ declare global {
       ICLOUD_APP_PASSWD: string;
       ICLOUD_EMAIL: string;
       MASTER_TOKEN: string;
+    }
+  }
+  namespace Express {
+    interface Request {
+      user?: string | jwt.JwtPayload;
     }
   }
 }
