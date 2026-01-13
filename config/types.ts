@@ -29,18 +29,19 @@ interface Eula extends RowDataPacket {
 
 interface Game extends RowDataPacket {
   gameId: number;
+  isApproved: boolean;
   uid: string;
   gameTitle: string;
   gameLatestRevision: number;
-  gamePlatformWindows: number;
-  gamePlatformMac: number;
-  gamePlatformMobile: number;
+  gamePlatformWindows: boolean;
+  gamePlatformMac: boolean;
+  gamePlatformMobile: boolean;
   gameEngine: string;
   gameGenre: stringLocalized;
   gameDeveloper: string;
   gamePublisher: string;
-  isEarlyAccess: number;
-  isReleased: number;
+  isEarlyAccess: boolean;
+  isReleased: boolean;
   gameReleasedDate: string;
   gameWebsite: string;
   gameVideoURL: string;
