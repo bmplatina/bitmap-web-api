@@ -6,6 +6,7 @@ import express from "express";
 import http from "http";
 import cors from "cors";
 import dotenv from "dotenv";
+import passport from "passport";
 dotenv.config();
 
 // 커스텀 모듈
@@ -37,6 +38,7 @@ app.use(
 
 // JSON 파싱을 위한 미들웨어
 app.use(express.json());
+app.use(passport.initialize());
 
 // 라우트 설정
 app.use("/auth", authRoutes);

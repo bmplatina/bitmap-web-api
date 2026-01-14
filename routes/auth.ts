@@ -63,6 +63,8 @@ passport.use(
 
           return done(null, createdAccountQuery[0]);
         }
+
+        return done(null, user);
       } catch (error) {
         return done(error, undefined);
       }
