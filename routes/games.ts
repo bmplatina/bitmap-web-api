@@ -17,6 +17,21 @@ router.get("/list", async (req: Request, res: Response) => {
   }
 });
 
+// 모든 게임 데이터 가져오기 API
+router.get("/list/uid", authMiddleware, async (req: Request, res: Response) => {
+  const jwtUid = (req as any).uid;
+  try {
+    const [results] = await bitmapDb.query(
+      "SELECT * FROM games_list WHERE uid = ?",
+      [jwtUid]
+    );
+    res.json(results);
+  } catch (err) {
+    console.error("데이터 조회 중 오류:", err);
+    res.status(500).send("서버 오류");
+  }
+});
+
 // 데이터 삽입 API
 router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
   const newGame = req.body;
