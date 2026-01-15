@@ -19,8 +19,9 @@ router.get("/list", async (req: Request, res: Response) => {
 
 // 모든 게임 데이터 가져오기 API
 router.get("/list/uid", authMiddleware, async (req: Request, res: Response) => {
-  const jwtUid = (req as any).uid;
+  const jwtUser = (req as any).user;
   try {
+    const jwtUid = jwtUser.uid;
     const [results] = await bitmapDb.query(
       "SELECT * FROM games_list WHERE uid = ?",
       [jwtUid]
