@@ -66,12 +66,12 @@ router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
     );
 
     res.json({
-      message: "새로운 게임이 추가되었습니다!",
+      message: "succeed",
       id: result.insertId,
     });
   } catch (err: any) {
     console.error("데이터 삽입 중 오류:", err);
-    res.status(500).send(err.message);
+    res.status(500).send(err);
   }
 });
 
