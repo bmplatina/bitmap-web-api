@@ -45,9 +45,9 @@ interface Game extends RowDataPacket {
   gameWebsite: string;
   gameVideoURL: string;
   gameDownloadMacURL: string | null;
-  requirementsMac: stringLocalized;
+  requirementsMac: string | null;
   gameDownloadWinURL: string | null;
-  requirementsWindows: stringLocalized;
+  requirementsWindows: string | null;
   gameImageURL: string[];
   gameBinaryName: string;
   gameHeadline: stringLocalized;
