@@ -13,7 +13,7 @@ router.get("/list", async (req: Request, res: Response) => {
     res.json(results);
   } catch (err) {
     console.error("데이터 조회 중 오류:", err);
-    res.status(500).send("서버 오류");
+    res.status(500).send("server-error");
   }
 });
 
@@ -24,12 +24,12 @@ router.get("/list/uid", authMiddleware, async (req: Request, res: Response) => {
     const jwtUid = jwtUser.uid;
     const [results] = await bitmapDb.query(
       "SELECT * FROM games_list WHERE uid = ?",
-      [jwtUid]
+      [jwtUid],
     );
     res.json(results);
   } catch (err) {
     console.error("데이터 조회 중 오류:", err);
-    res.status(500).send("서버 오류");
+    res.status(500).send("server-error");
   }
 });
 
@@ -62,17 +62,17 @@ router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
 
     const [result] = await bitmapDb.query<ResultSetHeader>(
       "INSERT INTO games_list SET ?",
-      [dbGameData]
+      [dbGameData],
     );
 
     res.json({
-      message: "succeed",
+      message: "submit-succeed",
       id: result.insertId,
     });
   } catch (err: any) {
     console.error("데이터 삽입 중 오류:", err);
     // 상세 에러 메시지 반환
-    res.status(500).json({ message: err.message || "서버 내부 오류 발생" });
+    res.status(500).json({ message: err.message || "server-error" });
   }
 });
 
@@ -105,23 +105,21 @@ router.post("/edit", authMiddleware, async (req: Request, res: Response) => {
 
     const [result] = await bitmapDb.query<ResultSetHeader>(
       "UPDATE games_list SET ? WHERE gameId = ?",
-      [dbGameData, rawGameData.gameId]
+      [dbGameData, rawGameData.gameId],
     );
 
     if (result.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({ message: "해당 gameId를 가진 게임을 찾을 수 없습니다." });
+      return res.status(404).json({ message: "invalid-gameid" });
     }
 
     res.json({
-      message: "게임 정보가 성공적으로 수정되었습니다!",
+      message: "edit-succeed",
       gameId: rawGameData.gameId,
     });
   } catch (err: any) {
     console.error("데이터 수정 중 오류:", err);
     // 상세 에러 메시지 반환 (SQL 에러 내용 포함)
-    res.status(500).json({ message: err.message || "서버 내부 오류 발생" });
+    res.status(500).json({ message: err.message || "server-error" });
   }
 });
 
