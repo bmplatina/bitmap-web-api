@@ -35,7 +35,6 @@ interface Game extends RowDataPacket {
   gameLatestRevision: number;
   gamePlatformWindows: boolean;
   gamePlatformMac: boolean;
-  gamePlatformMobile: boolean;
   gameEngine: string;
   gameGenre: stringLocalized;
   gameDeveloper: string;
@@ -46,7 +45,9 @@ interface Game extends RowDataPacket {
   gameWebsite: string;
   gameVideoURL: string;
   gameDownloadMacURL: string | null;
+  requirementsMac: stringLocalized;
   gameDownloadWinURL: string | null;
+  requirementsWindows: stringLocalized;
   gameImageURL: string[];
   gameBinaryName: string;
   gameHeadline: stringLocalized;
