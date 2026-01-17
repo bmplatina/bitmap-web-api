@@ -42,6 +42,12 @@ router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
     if (!jwtUser.isDeveloper) {
       throw Error("not-developer");
     }
+    if (!rawGameData.gameId) {
+      throw Error("gameid-required");
+    }
+    if (rawGameData.uid !== jwtUser.uid) {
+      throw Error("not-author");
+    }
 
     // 1. DB 저장을 위한 데이터 변환
     const dbGameData: any = {
@@ -55,7 +61,7 @@ router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
     };
 
     // 2. 불필요하거나 충돌을 일으키는 필드 제거
-    delete dbGameData.gameId; // AUTO_INCREMENT 충돌 방지
+    // delete dbGameData.gameId; // AUTO_INCREMENT 충돌 방지
 
     const [result] = await bitmapDb.query<ResultSetHeader>(
       "INSERT INTO games_list SET ?",
@@ -83,7 +89,10 @@ router.post("/edit", authMiddleware, async (req: Request, res: Response) => {
       throw Error("not-developer");
     }
     if (!rawGameData.gameId) {
-      throw Error("수정할 게임의 gameId가 누락되었습니다.");
+      throw Error("gameid-required");
+    }
+    if (rawGameData.uid !== jwtUser.uid) {
+      throw Error("not-author");
     }
 
     // 1. DB 저장을 위한 데이터 변환
@@ -96,7 +105,7 @@ router.post("/edit", authMiddleware, async (req: Request, res: Response) => {
     };
 
     // 2. SET 절에 포함되면 안 되는 필드 제거
-    delete dbGameData.gameId; // PK는 WHERE 절에서 사용하므로 SET에서 제외
+    // delete dbGameData.gameId; // PK는 WHERE 절에서 사용하므로 SET에서 제외
     delete dbGameData.uid; // 소유자 변경 방지
     delete dbGameData.isApproved; // 승인 상태 임의 변경 방지 (필요 시)
 
