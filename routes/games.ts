@@ -42,9 +42,6 @@ router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
     if (!jwtUser.isDeveloper) {
       throw Error("not-developer");
     }
-    if (!rawGameData.gameId) {
-      throw Error("gameid-required");
-    }
     if (rawGameData.uid !== jwtUser.uid) {
       throw Error("not-author");
     }
@@ -87,9 +84,6 @@ router.post("/edit", authMiddleware, async (req: Request, res: Response) => {
   try {
     if (!jwtUser.isDeveloper) {
       throw Error("not-developer");
-    }
-    if (!rawGameData.gameId) {
-      throw Error("gameid-required");
     }
     if (rawGameData.uid !== jwtUser.uid) {
       throw Error("not-author");
