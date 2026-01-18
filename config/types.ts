@@ -54,4 +54,25 @@ interface Game extends RowDataPacket {
   gameDescription: stringLocalized;
 }
 
-export { User, Eula, Game };
+/**
+ * 게임 평점 및 리뷰 데이터의 기본 구조
+ */
+interface GameRating extends RowDataPacket {
+  id: number;
+  gameId: number;
+  uid: string; // DB의 uid (UUID)
+  rating: number; // 1~5 또는 1~10 (tinyint 대응)
+  title: string | null; // 제목은 없을 수도 있으므로 null 허용
+  content: string; // DB의 body/text 대응
+  createdAt: string; // ISO 8601 날짜 문자열
+  updatedAt: string;
+}
+
+interface GameRatingRequest extends Omit<
+  GameRating,
+  "id" | "createdAt" | "updatedAt"
+> {
+  // 클라이언트에서 보낼 때는 이 데이터들만 포함됩니다.
+}
+
+export { User, Eula, Game, GameRating, GameRatingRequest };

@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { bitmapDb } from "@/config/db";
-import { Game } from "@/config/types";
+import { Game, GameRating, GameRatingRequest } from "@/config/types";
 import { ResultSetHeader } from "mysql2";
 import { authMiddleware } from "@/middleware/auth";
 
@@ -9,7 +9,7 @@ const router = express.Router();
 // 모든 게임 데이터 가져오기 API
 router.get("/list", async (req: Request, res: Response) => {
   try {
-    const [results] = await bitmapDb.query("SELECT * FROM games_list");
+    const [results] = await bitmapDb.query<Game[]>("SELECT * FROM games_list");
     res.json(results);
   } catch (err) {
     console.error("데이터 조회 중 오류:", err);
@@ -22,7 +22,7 @@ router.get("/list/uid", authMiddleware, async (req: Request, res: Response) => {
   const jwtUser = (req as any).user;
   try {
     const jwtUid = jwtUser.uid;
-    const [results] = await bitmapDb.query(
+    const [results] = await bitmapDb.query<Game[]>(
       "SELECT * FROM games_list WHERE uid = ?",
       [jwtUid],
     );
@@ -122,5 +122,92 @@ router.post("/edit", authMiddleware, async (req: Request, res: Response) => {
     res.status(500).json({ message: err.message || "server-error" });
   }
 });
+
+// 게임별 평가 가져오기 API
+router.get("/rate/:gameId", async (req: Request, res: Response) => {
+  const { gameId } = req.params;
+
+  try {
+    const [results] = await bitmapDb.query<GameRating[]>(
+      "SELECT * FROM GameRating WHERE gameId = ?",
+      [gameId],
+    );
+    res.json(results);
+  } catch (err) {
+    console.error("평가 조회 중 오류:", err);
+    res.status(500).send("server-error");
+  }
+});
+
+router.post(
+  "/rate/add",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const gameRate: GameRatingRequest = req.body;
+    const jwtUser = (req as any).user;
+
+    try {
+      if (gameRate.uid !== jwtUser.uid) {
+        throw Error("not-author");
+      }
+
+      const currentTime = new Date();
+
+      const dbGameRate: any = {
+        ...gameRate,
+        createdAt: currentTime.toISOString(),
+        updatedAt: currentTime.toISOString(),
+      };
+
+      const [result] = await bitmapDb.query<ResultSetHeader>(
+        "INSERT INTO GameRating SET ?",
+        [dbGameRate],
+      );
+
+      res.json({
+        message: "posted",
+        id: result.insertId,
+      });
+    } catch (err: any) {
+      console.error("평가 추가 중 오류:", err);
+      res.status(500).json({ message: err.message || "server-error" });
+    }
+  },
+);
+
+router.post(
+  "/rate/edit",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const gameRate: GameRatingRequest = req.body;
+    const jwtUser = (req as any).user;
+
+    try {
+      if (gameRate.uid !== jwtUser.uid) {
+        throw Error("not-author");
+      }
+
+      const currentTime = new Date();
+
+      const dbGameRate: any = {
+        ...gameRate,
+        updatedAt: currentTime.toISOString(),
+      };
+
+      const [result] = await bitmapDb.query<ResultSetHeader>(
+        "UPDATE GameRating SET ? WHERE gameId = ? AND uid = ?",
+        [dbGameRate, gameRate.gameId, gameRate.uid],
+      );
+
+      res.json({
+        message: "posted",
+        id: result.insertId,
+      });
+    } catch (err: any) {
+      console.error("평가 수정 중 오류:", err);
+      res.status(500).json({ message: err.message || "server-error" });
+    }
+  },
+);
 
 export default router;
