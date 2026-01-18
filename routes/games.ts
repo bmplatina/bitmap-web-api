@@ -155,13 +155,13 @@ router.post(
       // 2. DB 입력용 객체 생성
       // (Omit을 썼더라도 spread 시 의도치 않은 필드가 들어가지 않도록 명시해주는 것이 안전합니다)
       const [result] = await bitmapDb.query<ResultSetHeader>(
-        "INSERT INTO GameRating (gameId, uid, rate, title, body) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO GameRating (gameId, uid, rating, title, content) VALUES (?, ?, ?, ?, ?)",
         [
           gameRate.gameId,
           gameRate.uid,
-          gameRate.rate,
+          gameRate.rating,
           gameRate.title,
-          gameRate.body,
+          gameRate.content,
         ],
       );
 
