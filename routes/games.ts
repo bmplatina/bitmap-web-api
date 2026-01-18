@@ -139,6 +139,7 @@ router.get("/rate/:gameId", async (req: Request, res: Response) => {
   }
 });
 
+// 평가 추가 API
 router.post(
   "/rate/add",
   authMiddleware,
@@ -147,65 +148,60 @@ router.post(
     const jwtUser = (req as any).user;
 
     try {
-      if (gameRate.uid !== jwtUser.uid) {
-        throw Error("not-author");
-      }
+      // 1. 본인 확인
+      if (gameRate.uid !== jwtUser.uid)
+        return res.status(403).json({ message: "not-author" });
 
-      const currentTime = new Date();
-
-      const dbGameRate: any = {
-        ...gameRate,
-        createdAt: currentTime.toISOString(),
-        updatedAt: currentTime.toISOString(),
-      };
-
+      // 2. DB 입력용 객체 생성
+      // (Omit을 썼더라도 spread 시 의도치 않은 필드가 들어가지 않도록 명시해주는 것이 안전합니다)
       const [result] = await bitmapDb.query<ResultSetHeader>(
-        "INSERT INTO GameRating SET ?",
-        [dbGameRate],
+        "INSERT INTO GameRating (gameId, uid, rate, title, body) VALUES (?, ?, ?, ?, ?)",
+        [
+          gameRate.gameId,
+          gameRate.uid,
+          gameRate.rate,
+          gameRate.title,
+          gameRate.body,
+        ],
       );
 
-      res.json({
-        message: "posted",
-        id: result.insertId,
-      });
+      res.json({ message: "posted", id: result.insertId });
     } catch (err: any) {
-      console.error("평가 추가 중 오류:", err);
-      res.status(500).json({ message: err.message || "server-error" });
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.status(400).json({ message: "already-rated" });
+      }
+      res.status(500).json({ message: "server-error" });
     }
   },
 );
 
+// 평가 수정 API
 router.post(
   "/rate/edit",
   authMiddleware,
   async (req: Request, res: Response) => {
-    const gameRate: GameRatingRequest = req.body;
+    const { gameId, uid, ...updateFields }: GameRatingRequest = req.body;
     const jwtUser = (req as any).user;
 
     try {
-      if (gameRate.uid !== jwtUser.uid) {
-        throw Error("not-author");
-      }
+      if (uid !== jwtUser.uid)
+        return res.status(403).json({ message: "not-author" });
 
-      const currentTime = new Date();
-
-      const dbGameRate: any = {
-        ...gameRate,
-        updatedAt: currentTime.toISOString(),
-      };
+      // updatedAt 추가
+      const finalUpdateData = { ...updateFields, updatedAt: new Date() };
 
       const [result] = await bitmapDb.query<ResultSetHeader>(
         "UPDATE GameRating SET ? WHERE gameId = ? AND uid = ?",
-        [dbGameRate, gameRate.gameId, gameRate.uid],
+        [finalUpdateData, gameId, uid],
       );
 
-      res.json({
-        message: "posted",
-        id: result.insertId,
-      });
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "not-found" });
+      }
+
+      res.json({ message: "updated" });
     } catch (err: any) {
-      console.error("평가 수정 중 오류:", err);
-      res.status(500).json({ message: err.message || "server-error" });
+      res.status(500).json({ message: "server-error" });
     }
   },
 );
