@@ -75,4 +75,11 @@ interface GameRatingRequest extends Omit<
   // 클라이언트에서 보낼 때는 이 데이터들만 포함됩니다.
 }
 
-export { User, Eula, Game, GameRating, GameRatingRequest };
+interface Carousel extends RowDataPacket {
+  id: number;
+  image: string;
+  text: stringLocalized;
+  href: string | null;
+}
+
+export type { User, Eula, Game, GameRating, GameRatingRequest, Carousel };
