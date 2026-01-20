@@ -78,7 +78,8 @@ interface GameRatingRequest extends Omit<
 interface Carousel extends RowDataPacket {
   id: number;
   image: string;
-  text: stringLocalized;
+  title: stringLocalized;
+  description: stringLocalized;
   href: string | null;
 }
 
