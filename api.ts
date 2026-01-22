@@ -27,6 +27,8 @@ const PORT = 3030;
 // WebSocket 설정
 initializeWebSocket(server);
 
+app.set("strict routing", false);
+
 app.use(
   cors({
     origin: "https://prodbybitmap.com",
