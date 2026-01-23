@@ -81,6 +81,7 @@ interface Carousel extends RowDataPacket {
   title: stringLocalized;
   description: stringLocalized;
   href: string | null;
+  button: stringLocalized;
 }
 
 export type { User, Eula, Game, GameRating, GameRatingRequest, Carousel };
