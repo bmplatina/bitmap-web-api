@@ -11,9 +11,9 @@ router.get("/list", async (req: Request, res: Response) => {
   try {
     const [results] = await bitmapDb.query<Game[]>("SELECT * FROM games_list");
     res.json(results);
-  } catch (err) {
+  } catch (err: any) {
     console.error("데이터 조회 중 오류:", err);
-    res.status(500).send("server-error");
+    res.status(500).json({ message: err.message || "server-error" });
   }
 });
 
@@ -133,9 +133,9 @@ router.get("/rate/:gameId", async (req: Request, res: Response) => {
       [gameId],
     );
     res.json(results);
-  } catch (err) {
+  } catch (err: any) {
     console.error("평가 조회 중 오류:", err);
-    res.status(500).send("server-error");
+    res.status(500).json({ message: err.message || "server-error" });
   }
 });
 
@@ -170,7 +170,7 @@ router.post(
       if (err.code === "ER_DUP_ENTRY") {
         return res.status(400).json({ message: "already-rated" });
       }
-      res.status(500).json({ message: "server-error" });
+      res.status(500).json({ message: err.message || "server-error" });
     }
   },
 );
@@ -201,7 +201,35 @@ router.post(
 
       res.json({ message: "updated" });
     } catch (err: any) {
-      res.status(500).json({ message: "server-error" });
+      res.status(500).json({ message: err.message || "server-error" });
+    }
+  },
+);
+
+// 평가 제거 API
+router.post(
+  "/rate/delete",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { gameId, uid } = req.body;
+    const jwtUser = (req as any).user;
+
+    try {
+      if (uid !== jwtUser.uid)
+        return res.status(403).json({ message: "not-author" });
+
+      const [result] = await bitmapDb.query<ResultSetHeader>(
+        "DELETE FROM GameRating WHERE gameId = ? AND uid = ?",
+        [gameId, uid],
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "not-found" });
+      }
+
+      res.json({ message: "deleted" });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "server-error" });
     }
   },
 );
