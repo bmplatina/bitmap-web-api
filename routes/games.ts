@@ -211,16 +211,13 @@ router.post(
   "/rate/delete",
   authMiddleware,
   async (req: Request, res: Response) => {
-    const { gameId, uid } = req.body;
+    const { gameId } = req.body;
     const jwtUser = (req as any).user;
 
     try {
-      if (uid !== jwtUser.uid)
-        return res.status(403).json({ message: "not-author" });
-
       const [result] = await bitmapDb.query<ResultSetHeader>(
         "DELETE FROM GameRating WHERE gameId = ? AND uid = ?",
-        [gameId, uid],
+        [gameId, jwtUser.uid],
       );
 
       if (result.affectedRows === 0) {
