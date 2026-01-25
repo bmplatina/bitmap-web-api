@@ -84,4 +84,20 @@ interface Carousel extends RowDataPacket {
   button: stringLocalized;
 }
 
-export type { User, Eula, Game, GameRating, GameRatingRequest, Carousel };
+interface BitmapMemberInfo extends RowDataPacket {
+  id: number;
+  name: string;
+  channelId: string;
+  avatarUrl: string;
+  position: string;
+}
+
+export type {
+  User,
+  Eula,
+  Game,
+  GameRating,
+  GameRatingRequest,
+  Carousel,
+  BitmapMemberInfo,
+};
