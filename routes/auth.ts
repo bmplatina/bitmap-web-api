@@ -14,7 +14,7 @@ const router = express.Router();
 async function sendVerificationMail(
   locale: string,
   email: string,
-  verificationCode: string
+  verificationCode: string,
 ) {
   const title =
     locale === "ko"
@@ -42,7 +42,7 @@ passport.use(
         // 1. 구글 ID로 기존 사용자 검색
         const [rows] = await bitmapDb.query<User[]>(
           "SELECT * FROM users WHERE google_id = ?",
-          [profile.id]
+          [profile.id],
         );
         let user = rows[0];
 
@@ -53,12 +53,12 @@ passport.use(
 
           await bitmapDb.query<User[]>(
             "INSERT INTO users (uid, username, email, google_id, isVerified) VALUES (?, ?, ?, ?, ?)",
-            [newUid, profile.displayName, email, profile.id, 1]
+            [newUid, profile.displayName, email, profile.id, 1],
           );
 
           const [createdAccountQuery] = await bitmapDb.query<User[]>(
             "SELECT * FROM users WHERE google_id = ?",
-            [profile.id]
+            [profile.id],
           );
 
           return done(null, createdAccountQuery[0]);
@@ -68,8 +68,8 @@ passport.use(
       } catch (error) {
         return done(error, undefined);
       }
-    }
-  )
+    },
+  ),
 );
 
 // 3. 회원가입 API
@@ -90,7 +90,7 @@ router.post("/signup", async (req: Request, res: Response) => {
 
     // 1. 6자리 인증 번호 생성 및 만료 시간(10분) 설정
     const verificationCode = Math.floor(
-      100000 + Math.random() * 900000
+      100000 + Math.random() * 900000,
     ).toString();
     const expiresAt = new Date(Date.now() + 10 * 60000);
 
@@ -112,7 +112,7 @@ router.post("/signup", async (req: Request, res: Response) => {
         bIsTeammate,
         verificationCode,
         expiresAt,
-      ]
+      ],
     );
 
     // 4. 이메일 발송
@@ -144,7 +144,7 @@ router.post("/signup/check-duplicate", async (req, res) => {
 
     const [rows]: any = await bitmapDb.query(
       "SELECT 1 FROM users WHERE email = ? LIMIT 1",
-      [email]
+      [email],
     );
 
     // 데이터가 있으면 중복(false), 없으면 사용 가능(true)
@@ -168,7 +168,7 @@ router.post("/login", async (req, res) => {
     // 사용자 조회 (조회 시 uid를 가져오는지 확인)
     const [rows] = await bitmapDb.query<User[]>(
       "SELECT * FROM users WHERE email = ?",
-      [email]
+      [email],
     );
     const user = rows[0];
 
@@ -203,7 +203,7 @@ router.post("/login", async (req, res) => {
         isEmailVerified: user.isVerified,
       },
       secret,
-      { expiresIn: bKeepLoggedIn ? "30d" : "6h" }
+      { expiresIn: bKeepLoggedIn ? "30d" : "6h" },
     );
 
     return res.status(200).json({ token });
@@ -226,7 +226,7 @@ router.post("/email/verify", authMiddleware, async (req, res) => {
 
     const [rows] = await bitmapDb.query<User[]>(
       "SELECT verification_code, code_expires_at FROM users WHERE email = ?",
-      [email]
+      [email],
     );
     const user = rows[0];
 
@@ -245,7 +245,7 @@ router.post("/email/verify", authMiddleware, async (req, res) => {
     // 인증 완료 처리
     await bitmapDb.query<User[]>(
       "UPDATE users SET verification_code = NULL, code_expires_at = NULL, isVerified = 1 WHERE email = ?",
-      [email]
+      [email],
     );
 
     return res.status(200).send("verified");
@@ -268,7 +268,7 @@ router.post("/email/send", authMiddleware, async (req, res) => {
 
     const [rows] = await bitmapDb.query<User[]>(
       "SELECT uid, username FROM users WHERE email = ?",
-      [email]
+      [email],
     );
     const user = rows[0];
 
@@ -277,14 +277,14 @@ router.post("/email/send", authMiddleware, async (req, res) => {
 
     // 1. 6자리 인증 번호 생성 및 만료 시간(10분) 설정
     const verificationCode = Math.floor(
-      100000 + Math.random() * 900000
+      100000 + Math.random() * 900000,
     ).toString();
     const expiresAt = new Date(Date.now() + 10 * 60000);
 
     // 3. 사용자 정보 DB에 저장 (uid 컬럼 추가)
     await bitmapDb.query(
       "UPDATE users SET verification_code = ?, code_expires_at = ? WHERE email = ?",
-      [verificationCode, expiresAt, email]
+      [verificationCode, expiresAt, email],
     );
 
     // 4. 이메일 발송
@@ -305,7 +305,7 @@ router.post("/email/send", authMiddleware, async (req, res) => {
 // 1. 로그인 시도: 사용자가 이 주소로 접속하면 구글 로그인 창으로 이동
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", { scope: ["profile", "email"] }),
 );
 
 // 2. 로그인 콜백: 구글 인증 완료 후 돌아오는 주소
@@ -335,14 +335,14 @@ router.get(
         isTeammate: user.isTeammate,
         isEmailVerified: user.isVerified,
       },
-      secret
+      secret,
       // { expiresIn: "1h" }
     );
 
     // 4. 프론트엔드로 리다이렉트 (URL 쿼리 파라미터로 토큰 전달)
     const frontendUrl = process.env.FRONTEND_URL || "https://prodbybitmap.com";
     return res.redirect(`${frontendUrl}?token=${token}`);
-  }
+  },
 );
 
 // 6. 보호된 라우트 (기존 코드 유지)
@@ -374,7 +374,7 @@ router.post("/profile/query/:method", authMiddleware, async (req, res) => {
       // username과 email을 동시에 가져오는 쿼리
       const [rows] = await bitmapDb.query<User[]>(
         "SELECT username, email FROM users WHERE uid = ?",
-        [uid]
+        [uid],
       );
 
       const user = rows[0];
@@ -409,6 +409,49 @@ router.post("/profile/query/:method", authMiddleware, async (req, res) => {
 
       const decoded = jwt.verify(token, secret) as any;
       return res.status(200).json({ uid: decoded.uid });
+    } catch (error) {
+      return res.status(401).send("invalid-token");
+    }
+  }
+  return res.status(400).send("invalid-method");
+});
+
+router.post("/edit/:method", authMiddleware, async (req, res) => {
+  const { method } = req.params;
+  const jwtUser = (req as any).user;
+
+  // 7. UID 기반으로 프로필 검색
+  if (method === "username") {
+    try {
+      const { newUsername } = req.body;
+
+      if (!newUsername) {
+        return res.status(400).send("require-new-username");
+      }
+
+      await bitmapDb.query("UPDATE users SET username = ? WHERE email = ?", [
+        newUsername,
+        jwtUser.email,
+      ]);
+    } catch (error) {
+      return res.status(401).send("invalid-token");
+    }
+  }
+  // 7. UID 기반으로 프로필 검색
+  else if (method === "password") {
+    try {
+      const { newPassword } = req.body;
+
+      if (!newPassword) {
+        return res.status(400).send("require-new-password");
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      await bitmapDb.query("UPDATE users SET password = ? WHERE email = ?", [
+        hashedPassword,
+        jwtUser.email,
+      ]);
     } catch (error) {
       return res.status(401).send("invalid-token");
     }
