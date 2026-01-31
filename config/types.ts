@@ -96,6 +96,7 @@ interface BitmapMemberInfo extends RowDataPacket {
 interface MembershipApplies extends RowDataPacket {
   id: number;
   locale: string; // varchar(2)
+  uid: string; // varchar(36) - 사용자 고유 식별자
   name: string; // varchar(20)
   alias: string; // varchar(20)
   age: number; // int
