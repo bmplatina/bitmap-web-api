@@ -103,14 +103,12 @@ router.post("/signup", async (req: Request, res: Response) => {
 
     // 3. 사용자 정보 DB에 저장 (uid 컬럼 추가)
     await bitmapDb.query(
-      "INSERT INTO users (uid, username, email, password, isDeveloper, isTeammate, avatarUri, verification_code, code_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO users (uid, username, email, password, avatarUri, verification_code, code_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [
         newUid,
         username,
         email,
         hashedPassword,
-        bIsDeveloper,
-        bIsTeammate,
         avatarUri,
         verificationCode,
         expiresAt,
