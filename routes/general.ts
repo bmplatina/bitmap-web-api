@@ -4,7 +4,7 @@ import { Carousel, Eula, MembershipApplies } from "@/config/types";
 
 const router = express.Router();
 
-router.get("/:title", async (req: Request, res: Response) => {
+router.get("/eula/:title", async (req: Request, res: Response) => {
   const { title } = req.params;
 
   try {
