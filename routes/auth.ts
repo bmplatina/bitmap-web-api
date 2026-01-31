@@ -81,8 +81,6 @@ router.post("/signup", async (req: Request, res: Response) => {
       email,
       password,
       avatarUri,
-      bIsDeveloper = false,
-      bIsTeammate = false,
     } = req.body;
 
     if (!username || !password || !email) {

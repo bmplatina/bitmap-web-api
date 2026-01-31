@@ -95,20 +95,28 @@ interface BitmapMemberInfo extends RowDataPacket {
 
 interface MembershipApplies extends RowDataPacket {
   id: number;
-  locale: string;           // varchar(2)
-  name: string;             // varchar(20)
-  alias: string;            // varchar(20)
-  age: number;              // int
-  introduction: string;     // text
-  motivation: string;       // text
-  affiliate: string;        // text
-  field: number[];          // json [number]
-  prodTools: string;        // text (기존 prodToold에서 변경)
-  portfolio: string;        // text
-  youtubeHandle: string;    // text
-  avatarUri: string;        // text
-  position: string;         // varchar(30)
-  isApproved: boolean;      // tinyint(1) (0 또는 1)
+  locale: string; // varchar(2)
+  name: string; // varchar(20)
+  alias: string; // varchar(20)
+  age: number; // int
+  introduction: string; // text
+  motivation: string; // text
+  affiliate: string; // text
+  field: number[]; // json [number]
+  prodTools: string; // text (기존 prodToold에서 변경)
+  portfolio: string; // text
+  youtubeHandle: string; // text
+  avatarUri: string; // text
+  position: string; // varchar(30)
+  isApproved: boolean; // tinyint(1) (0 또는 1)
+}
+
+interface MembershipLeaveRequest extends RowDataPacket {
+  id: number;
+  locale: string; // varchar(2)
+  uid: string; // varchar(36) - 사용자 고유 식별자
+  leaveReason: string; // text
+  satisfaction: number[]; // json [number]
 }
 
 export type {
@@ -119,5 +127,6 @@ export type {
   GameRatingRequest,
   Carousel,
   BitmapMemberInfo,
-  MembershipApplies
+  MembershipApplies,
+  MembershipLeaveRequest,
 };
