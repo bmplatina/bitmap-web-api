@@ -13,6 +13,7 @@ interface User extends RowDataPacket {
   isAdmin: boolean;
   isDeveloper: boolean;
   isTeammate: boolean;
+  avatarUri: string;
   createdAt: string;
   google_id: string;
   uid: string;

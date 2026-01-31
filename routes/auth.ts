@@ -80,6 +80,7 @@ router.post("/signup", async (req: Request, res: Response) => {
       username,
       email,
       password,
+      avatarUri,
       bIsDeveloper = false,
       bIsTeammate = false,
     } = req.body;
@@ -102,7 +103,7 @@ router.post("/signup", async (req: Request, res: Response) => {
 
     // 3. 사용자 정보 DB에 저장 (uid 컬럼 추가)
     await bitmapDb.query(
-      "INSERT INTO users (uid, username, email, password, isDeveloper, isTeammate, verification_code, code_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO users (uid, username, email, password, isDeveloper, isTeammate, avatarUri, verification_code, code_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         newUid,
         username,
@@ -110,6 +111,7 @@ router.post("/signup", async (req: Request, res: Response) => {
         hashedPassword,
         bIsDeveloper,
         bIsTeammate,
+        avatarUri,
         verificationCode,
         expiresAt,
       ],
@@ -198,8 +200,10 @@ router.post("/login", async (req, res) => {
         uid: user.uid,
         email: user.email,
         username: user.username,
+        isAdmin: user.isAdmin,
         isDeveloper: user.isDeveloper,
         isTeammate: user.isTeammate,
+        avatarUri: user.avatarUri,
         isEmailVerified: user.isVerified,
       },
       secret,
@@ -329,10 +333,12 @@ router.get(
     const token = jwt.sign(
       {
         uid: user.uid,
-        username: user.username,
         email: user.email,
+        username: user.username,
+        isAdmin: user.isAdmin,
         isDeveloper: user.isDeveloper,
         isTeammate: user.isTeammate,
+        avatarUri: user.avatarUri,
         isEmailVerified: user.isVerified,
       },
       secret,
@@ -350,11 +356,12 @@ router.get("/profile", authMiddleware, (req, res) => {
   const user = (req as any).user;
   return res.json({
     uid: user.uid,
-    username: user.username,
     email: user.email,
-    isAdmin: user.isadmin,
+    username: user.username,
+    isAdmin: user.isAdmin,
     isDeveloper: user.isDeveloper,
     isTeammate: user.isTeammate,
+    avatarUri: user.avatarUri,
     isEmailVerified: user.isVerified,
   });
 });
