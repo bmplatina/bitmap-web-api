@@ -17,7 +17,7 @@ import gamesRoutes from "@/routes/games";
 import notificationRoutes from "@/routes/notifications";
 import uploadRoutes from "@/routes/upload";
 import youtubeRoutes from "@/routes/youtube";
-import eulaRoutes from "@/routes/eula";
+import permissionRoutes from "@/routes/permissions";
 
 // Express 설정
 const app = express();
@@ -50,7 +50,7 @@ app.use("/games", gamesRoutes);
 app.use("/notify", notificationRoutes);
 app.use("/upload", uploadRoutes);
 app.use("/youtube", youtubeRoutes);
-app.use("/eula", eulaRoutes);
+app.use("/permissions", permissionRoutes);
 
 // 서버 시작
 server.listen(PORT, () => {
