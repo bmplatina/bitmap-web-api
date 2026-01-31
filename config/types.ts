@@ -19,7 +19,7 @@ interface User extends RowDataPacket {
   uid: string;
   verification_code: number;
   code_expires_at: string;
-  isVerified: boolean;
+  isEmailVerified: boolean;
 }
 
 interface Eula extends RowDataPacket {

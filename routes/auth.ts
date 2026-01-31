@@ -52,7 +52,7 @@ passport.use(
           const email = profile.emails?.[0]?.value ?? ""; // 이메일 추출
 
           await bitmapDb.query<User[]>(
-            "INSERT INTO users (uid, username, email, google_id, isVerified) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO users (uid, username, email, google_id, isEmailVerified) VALUES (?, ?, ?, ?, ?)",
             [newUid, profile.displayName, email, profile.id, 1],
           );
 
@@ -179,7 +179,7 @@ router.post("/login", async (req, res) => {
     }
 
     // 이메일 인증 여부 확인
-    // if (!user.isVerified) {
+    // if (!user.isEmailVerified) {
     //   return res.status(403).send("email-not-verified");
     // }
 
@@ -204,7 +204,7 @@ router.post("/login", async (req, res) => {
         isDeveloper: user.isDeveloper,
         isTeammate: user.isTeammate,
         avatarUri: user.avatarUri,
-        isEmailVerified: user.isVerified,
+        isEmailVerified: user.isEmailVerified,
       },
       secret,
       { expiresIn: bKeepLoggedIn ? "30d" : "6h" },
@@ -248,7 +248,7 @@ router.post("/email/verify", authMiddleware, async (req, res) => {
 
     // 인증 완료 처리
     await bitmapDb.query<User[]>(
-      "UPDATE users SET verification_code = NULL, code_expires_at = NULL, isVerified = 1 WHERE email = ?",
+      "UPDATE users SET verification_code = NULL, code_expires_at = NULL, isEmailVerified = 1 WHERE email = ?",
       [email],
     );
 
@@ -277,7 +277,7 @@ router.post("/email/send", authMiddleware, async (req, res) => {
     const user = rows[0];
 
     if (!user) return res.status(404).send("user-not-found");
-    if (user.isVerified) return res.status(403).send("email-already-verified");
+    if (user.isEmailVerified) return res.status(403).send("email-already-verified");
 
     // 1. 6자리 인증 번호 생성 및 만료 시간(10분) 설정
     const verificationCode = Math.floor(
@@ -339,7 +339,7 @@ router.get(
         isDeveloper: user.isDeveloper,
         isTeammate: user.isTeammate,
         avatarUri: user.avatarUri,
-        isEmailVerified: user.isVerified,
+        isEmailVerified: user.isEmailVerified,
       },
       secret,
       // { expiresIn: "1h" }
@@ -362,7 +362,7 @@ router.get("/profile", authMiddleware, (req, res) => {
     isDeveloper: user.isDeveloper,
     isTeammate: user.isTeammate,
     avatarUri: user.avatarUri,
-    isEmailVerified: user.isVerified,
+    isEmailVerified: user.isEmailVerified,
   });
 });
 
