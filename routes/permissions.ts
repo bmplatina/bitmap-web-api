@@ -130,6 +130,35 @@ router.get(
 );
 
 router.post(
+  "/members/apply/grant/:uid",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { uid } = req.params;
+    const jwtUser = (req as any).user;
+
+    if (!jwtUser.isAdmin) {
+      return res.status(403).send("not-admin");
+    }
+
+    try {
+      await bitmapDb.query("UPDATE users SET isTeammate = 1 WHERE uid = ?", [
+        uid,
+      ]);
+
+      await bitmapDb.query(
+        "UPDATE membershipApplies SET isApproved = 1 WHERE uid = ?",
+        [uid],
+      );
+
+      res.json({ message: "granted" });
+    } catch (err) {
+      console.error("데이터 등록 중 오류:", err);
+      res.status(500).json({ message: "server-error" });
+    }
+  },
+);
+
+router.post(
   "/members/leave",
   authMiddleware,
   async (req: Request, res: Response) => {
@@ -194,6 +223,35 @@ router.get(
 
       const leaveReq = rows[0];
       res.json(leaveReq);
+    } catch (err) {
+      console.error("데이터 등록 중 오류:", err);
+      res.status(500).json({ message: "server-error" });
+    }
+  },
+);
+
+router.post(
+  "/members/leave/grant/:uid",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { uid } = req.params;
+    const jwtUser = (req as any).user;
+
+    if (!jwtUser.isAdmin) {
+      return res.status(403).send("not-admin");
+    }
+
+    try {
+      await bitmapDb.query("UPDATE users SET isTeammate = 0 WHERE uid = ?", [
+        uid,
+      ]);
+
+      await bitmapDb.query(
+        "UPDATE membershipApplies SET isApproved = 0 WHERE uid = ?",
+        [uid],
+      );
+
+      res.json({ message: "granted" });
     } catch (err) {
       console.error("데이터 등록 중 오류:", err);
       res.status(500).json({ message: "server-error" });
