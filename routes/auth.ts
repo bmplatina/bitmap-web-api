@@ -75,13 +75,7 @@ passport.use(
 // 3. 회원가입 API
 router.post("/signup", async (req: Request, res: Response) => {
   try {
-    const {
-      locale = "ko",
-      username,
-      email,
-      password,
-      avatarUri,
-    } = req.body;
+    const { locale = "ko", username, email, password, avatarUri } = req.body;
 
     if (!username || !password || !email) {
       return res.status(400).send("require-id-pw");
@@ -273,7 +267,8 @@ router.post("/email/send", authMiddleware, async (req, res) => {
     const user = rows[0];
 
     if (!user) return res.status(404).send("user-not-found");
-    if (user.isEmailVerified) return res.status(403).send("email-already-verified");
+    if (user.isEmailVerified)
+      return res.status(403).send("email-already-verified");
 
     // 1. 6자리 인증 번호 생성 및 만료 시간(10분) 설정
     const verificationCode = Math.floor(
@@ -376,7 +371,7 @@ router.post("/profile/query/:method", authMiddleware, async (req, res) => {
 
       // username과 email을 동시에 가져오는 쿼리
       const [rows] = await bitmapDb.query<User[]>(
-        "SELECT username, email FROM users WHERE uid = ?",
+        "SELECT username, email, avatarUri, id FROM users WHERE uid = ?",
         [uid],
       );
 
@@ -390,6 +385,8 @@ router.post("/profile/query/:method", authMiddleware, async (req, res) => {
       return res.status(200).json({
         username: user.username,
         email: user.email,
+        avatarUri: user.avatarUri,
+        id: user.id
       });
     } catch (error) {
       console.error(error);
