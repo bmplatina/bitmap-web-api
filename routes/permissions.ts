@@ -87,7 +87,7 @@ router.get(
   async (req: Request, res: Response) => {
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isAdmin) {
+    if (!jwtUser.isAdmin || jwtUser !== "Master") {
       return res.status(403).send("not-admin");
     }
 
@@ -110,7 +110,7 @@ router.get(
     const { id } = req.params;
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isAdmin) {
+    if (!jwtUser.isAdmin || jwtUser !== "Master") {
       return res.status(403).send("not-admin");
     }
 
@@ -165,9 +165,7 @@ router.post(
     const { locale, uid, leaveReason, satisfaction } = req.body;
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isAdmin) {
-      return res.status(403).send("not-admin");
-    }
+    if (!jwtUser.isTeammate) return res.status(403).send("not-teammate");
 
     try {
       await bitmapDb.query(
@@ -188,7 +186,7 @@ router.get(
   async (req: Request, res: Response) => {
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isAdmin) {
+    if (!jwtUser.isAdmin || jwtUser !== "Master") {
       return res.status(403).send("not-admin");
     }
 
@@ -211,7 +209,7 @@ router.get(
     const { id } = req.params;
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isAdmin) {
+    if (!jwtUser.isAdmin || jwtUser !== "Master") {
       return res.status(403).send("not-admin");
     }
 
