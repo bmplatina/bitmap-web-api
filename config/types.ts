@@ -103,7 +103,7 @@ interface MembershipApplies extends RowDataPacket {
   introduction: string; // text
   motivation: string; // text
   affiliate: string; // text
-  field: number[]; // json [number]
+  field: Array<string>; // json [number]
   prodTools: string; // text (기존 prodToold에서 변경)
   portfolio: string; // text
   youtubeHandle: string; // text
