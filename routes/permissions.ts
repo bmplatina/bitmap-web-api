@@ -9,7 +9,7 @@ router.post("/eula", authMiddleware, async (req: Request, res: Response) => {
   const { title, ko, en } = req.body;
   const jwtUser = (req as any).user;
 
-  if (!jwtUser.isDeveloper) {
+  if (jwtUser !== "Master" && !jwtUser.isDeveloper) {
     return res.status(403).send("not-developer");
   }
 
@@ -87,7 +87,7 @@ router.get(
   async (req: Request, res: Response) => {
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isAdmin || jwtUser !== "Master") {
+    if (jwtUser !== "Master" && !jwtUser.isAdmin) {
       return res.status(403).send("not-admin");
     }
 
@@ -110,7 +110,7 @@ router.get(
     const { id } = req.params;
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isAdmin || jwtUser !== "Master") {
+    if (jwtUser !== "Master" && !jwtUser.isAdmin) {
       return res.status(403).send("not-admin");
     }
 
@@ -136,7 +136,7 @@ router.post(
     const { uid } = req.params;
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isAdmin) {
+    if (jwtUser !== "Master" && !jwtUser.isAdmin) {
       return res.status(403).send("not-admin");
     }
 
@@ -165,7 +165,8 @@ router.post(
     const { locale, uid, leaveReason, satisfaction } = req.body;
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isTeammate) return res.status(403).send("not-teammate");
+    if (jwtUser !== "Master" && !jwtUser.isTeammate)
+      return res.status(403).send("not-teammate");
 
     try {
       await bitmapDb.query(
@@ -186,7 +187,7 @@ router.get(
   async (req: Request, res: Response) => {
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isAdmin || jwtUser !== "Master") {
+    if (jwtUser !== "Master" && !jwtUser.isAdmin) {
       return res.status(403).send("not-admin");
     }
 
@@ -209,7 +210,7 @@ router.get(
     const { id } = req.params;
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isAdmin || jwtUser !== "Master") {
+    if (jwtUser !== "Master" && !jwtUser.isAdmin) {
       return res.status(403).send("not-admin");
     }
 
@@ -235,7 +236,7 @@ router.post(
     const { uid } = req.params;
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isAdmin) {
+    if (jwtUser !== "Master" && !jwtUser.isAdmin) {
       return res.status(403).send("not-admin");
     }
 
