@@ -81,6 +81,54 @@ router.post(
   },
 );
 
+router.get(
+  "/members/apply",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const jwtUser = (req as any).user;
+
+    if (!jwtUser.isAdmin) {
+      return res.status(403).send("not-admin");
+    }
+
+    try {
+      const [results] = await bitmapDb.query<MembershipApplies[]>(
+        "SELECT * FROM membershipApplies WHERE isApproved = 0",
+      );
+      return res.json(results);
+    } catch (err) {
+      console.error("데이터 조회 중 오류:", err);
+      return res.status(500).send("server-error");
+    }
+  },
+);
+
+router.get(
+  "/members/apply/:id",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const jwtUser = (req as any).user;
+
+    if (!jwtUser.isAdmin) {
+      return res.status(403).send("not-admin");
+    }
+
+    try {
+      const [rows] = await bitmapDb.query<MembershipApplies[]>(
+        "SELECT * FROM membershipApplies WHERE id = ?",
+        [id],
+      );
+
+      const leaveReq = rows[0];
+      res.json(leaveReq);
+    } catch (err) {
+      console.error("데이터 등록 중 오류:", err);
+      res.status(500).json({ message: "server-error" });
+    }
+  },
+);
+
 router.post(
   "/members/leave",
   authMiddleware,
@@ -88,8 +136,8 @@ router.post(
     const { locale, uid, leaveReason, satisfaction } = req.body;
     const jwtUser = (req as any).user;
 
-    if (!jwtUser.isTeammate) {
-      return res.status(403).send("not-teammate");
+    if (!jwtUser.isAdmin) {
+      return res.status(403).send("not-admin");
     }
 
     try {
@@ -98,6 +146,54 @@ router.post(
         [locale, uid, leaveReason, JSON.stringify(satisfaction)],
       );
       res.json({ message: "submitted" });
+    } catch (err) {
+      console.error("데이터 등록 중 오류:", err);
+      res.status(500).json({ message: "server-error" });
+    }
+  },
+);
+
+router.get(
+  "/members/leave",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const jwtUser = (req as any).user;
+
+    if (!jwtUser.isAdmin) {
+      return res.status(403).send("not-admin");
+    }
+
+    try {
+      const [results] = await bitmapDb.query<MembershipLeaveRequest[]>(
+        "SELECT * FROM membershipLeaveRequest",
+      );
+      return res.json(results);
+    } catch (err) {
+      console.error("데이터 조회 중 오류:", err);
+      return res.status(500).send("server-error");
+    }
+  },
+);
+
+router.get(
+  "/members/leave/:id",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const jwtUser = (req as any).user;
+
+    if (!jwtUser.isAdmin) {
+      return res.status(403).send("not-admin");
+    }
+
+    try {
+      const [rows] = await bitmapDb.query<MembershipLeaveRequest[]>(
+        "SELECT * FROM membershipLeaveRequest WHERE id = ?",
+        [id],
+      );
+
+      const leaveReq = rows[0];
+      res.json(leaveReq);
     } catch (err) {
       console.error("데이터 등록 중 오류:", err);
       res.status(500).json({ message: "server-error" });
