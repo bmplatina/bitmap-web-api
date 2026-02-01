@@ -46,6 +46,7 @@ router.post(
       youtubeHandle,
       avatarUri,
       position,
+      uid,
     } = req.body;
 
     const jwtUser = (req as any).user;
@@ -54,7 +55,7 @@ router.post(
 
     try {
       await bitmapDb.query(
-        "INSERT INTO membershipApplies (locale, name, alias, age, introduction, motivation, affiliate, field, prodTools, portfolio, youtubeHandle, avatarUri, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO membershipApplies (locale, name, alias, age, introduction, motivation, affiliate, field, prodTools, portfolio, youtubeHandle, avatarUri, position, uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           locale,
           name,
@@ -69,6 +70,7 @@ router.post(
           youtubeHandle,
           avatarUri,
           position,
+          uid,
         ],
       );
       res.json({ message: "submitted" });
