@@ -433,6 +433,7 @@ router.post("/edit/:method", authMiddleware, async (req, res) => {
         newUsername,
         jwtUser.uid,
       ]);
+      return res.status(200).json({ message: "success" });
     } catch (error) {
       return res.status(401).send("invalid-token");
     }
@@ -452,6 +453,7 @@ router.post("/edit/:method", authMiddleware, async (req, res) => {
         hashedPassword,
         jwtUser.uid,
       ]);
+      return res.status(200).json({ message: "success" });
     } catch (error) {
       return res.status(401).send("invalid-token");
     }
@@ -469,6 +471,7 @@ router.post("/edit/:method", authMiddleware, async (req, res) => {
         newAvatarUri,
         jwtUser.uid,
       ]);
+      return res.status(200).json({ message: "success" });
     } catch (error) {
       return res.status(401).send("invalid-token");
     }
