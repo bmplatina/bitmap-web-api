@@ -386,7 +386,7 @@ router.post("/profile/query/:method", authMiddleware, async (req, res) => {
         username: user.username,
         email: user.email,
         avatarUri: user.avatarUri,
-        id: user.id
+        id: user.id,
       });
     } catch (error) {
       console.error(error);
@@ -420,7 +420,7 @@ router.post("/edit/:method", authMiddleware, async (req, res) => {
   const { method } = req.params;
   const jwtUser = (req as any).user;
 
-  // 7. UID 기반으로 프로필 검색
+  // 유저 이름 수정
   if (method === "username") {
     try {
       const { newUsername } = req.body;
@@ -429,15 +429,15 @@ router.post("/edit/:method", authMiddleware, async (req, res) => {
         return res.status(400).send("require-new-username");
       }
 
-      await bitmapDb.query("UPDATE users SET username = ? WHERE email = ?", [
+      await bitmapDb.query("UPDATE users SET username = ? WHERE uid = ?", [
         newUsername,
-        jwtUser.email,
+        jwtUser.uid,
       ]);
     } catch (error) {
       return res.status(401).send("invalid-token");
     }
   }
-  // 7. UID 기반으로 프로필 검색
+  // 비밀번호 수정
   else if (method === "password") {
     try {
       const { newPassword } = req.body;
@@ -448,9 +448,26 @@ router.post("/edit/:method", authMiddleware, async (req, res) => {
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-      await bitmapDb.query("UPDATE users SET password = ? WHERE email = ?", [
+      await bitmapDb.query("UPDATE users SET password = ? WHERE uid = ?", [
         hashedPassword,
-        jwtUser.email,
+        jwtUser.uid,
+      ]);
+    } catch (error) {
+      return res.status(401).send("invalid-token");
+    }
+  }
+  // 아바타 수정
+  else if (method === "avatarUri") {
+    try {
+      const { newAvatarUri } = req.body;
+
+      if (!newAvatarUri) {
+        return res.status(400).send("require-new-avatarUri");
+      }
+
+      await bitmapDb.query("UPDATE users SET avatarUri = ? WHERE uid = ?", [
+        newAvatarUri,
+        jwtUser.uid,
       ]);
     } catch (error) {
       return res.status(401).send("invalid-token");
