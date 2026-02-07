@@ -343,18 +343,34 @@ router.get(
 );
 
 // 6. 보호된 라우트 (기존 코드 유지)
-router.get("/profile", authMiddleware, (req, res) => {
+router.get("/profile", authMiddleware, async (req, res) => {
   const user = (req as any).user;
-  return res.json({
-    uid: user.uid,
-    email: user.email,
-    username: user.username,
-    isAdmin: user.isAdmin,
-    isDeveloper: user.isDeveloper,
-    isTeammate: user.isTeammate,
-    avatarUri: user.avatarUri,
-    isEmailVerified: user.isEmailVerified,
-  });
+
+  try {
+    if (user === "Master")
+      res.status(401).json({ message: "master-token-not-allowed" });
+
+    const [rows] = await bitmapDb.query<User[]>(
+      "SELECT uid, email, username, isAdmin, isDeveloper, isTeammate, avatarUri, isEmailVerified FROM users WHERE uid = ?",
+      [user.uid],
+    );
+
+    const result = rows[0];
+
+    return res.status(200).json(result);
+  } catch (error: any) {
+    return res.status(200).json({
+      error: error,
+      uid: user.uid,
+      email: user.email,
+      username: user.username,
+      isAdmin: user.isAdmin,
+      isDeveloper: user.isDeveloper,
+      isTeammate: user.isTeammate,
+      avatarUri: user.avatarUri,
+      isEmailVerified: user.isEmailVerified,
+    });
+  }
 });
 
 router.post("/profile/query/:method", authMiddleware, async (req, res) => {
