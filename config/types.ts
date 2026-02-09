@@ -120,6 +120,21 @@ interface MembershipLeaveRequest extends RowDataPacket {
   satisfaction: number[]; // json [number]
 }
 
+// 알림 유형을 안전하게 관리하기 위한 Union Type
+type NotificationType = "GAME_UPDATE" | "SYSTEM" | "PURCHASE" | string;
+
+interface Notification extends RowDataPacket {
+  id: number; // BIGINT -> number (2^53-1 이상은 string으로 처리하기도 함)
+  uid: string; // 수신 대상 사용자 ID
+  type: NotificationType; // 알림 유형 (문자열 리터럴로 상세 정의 추천)
+  title: string; // 알림 제목
+  content: string; // 알림 상세 내용
+  redirectionUri?: string; // 클릭 시 이동 경로 (NULL 허용이므로 옵셔널)
+  isRead: boolean; // 읽음 여부
+  readAt: string | null; // 읽은 시간 (ISO string 또는 null)
+  createdAt: string; // 생성 시간
+}
+
 export type {
   User,
   Eula,
@@ -130,4 +145,5 @@ export type {
   BitmapMemberInfo,
   MembershipApplies,
   MembershipLeaveRequest,
+  Notification,
 };

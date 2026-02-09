@@ -7,6 +7,7 @@ import http from "http";
 import cors from "cors";
 import dotenv from "dotenv";
 import passport from "passport";
+import compression from "compression";
 dotenv.config();
 
 // 커스텀 모듈
@@ -26,6 +27,8 @@ const PORT = 3030;
 
 // WebSocket 설정
 initializeWebSocket(server);
+
+app.use(compression());
 
 app.set("strict routing", false);
 
