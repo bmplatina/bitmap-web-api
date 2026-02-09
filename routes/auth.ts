@@ -387,7 +387,7 @@ router.post("/profile/query/:method", authMiddleware, async (req, res) => {
 
       // username과 email을 동시에 가져오는 쿼리
       const [rows] = await bitmapDb.query<User[]>(
-        "SELECT username, email, avatarUri, id FROM users WHERE uid = ?",
+        "SELECT id, username, email, isAdmin, isDeveloper, isTeammate, avatarUri, createdAt, google_id, uid, isEmailVerified FROM users WHERE uid = ?",
         [uid],
       );
 
@@ -399,10 +399,17 @@ router.post("/profile/query/:method", authMiddleware, async (req, res) => {
 
       // 클라이언트에 두 정보 모두 전달
       return res.status(200).json({
+        id: user.id,
         username: user.username,
         email: user.email,
+        isAdmin: user.isAdmin,
+        isDeveloper: user.isDeveloper,
+        isTeammate: user.isTeammate,
         avatarUri: user.avatarUri,
-        id: user.id,
+        createdAt: user.createdAt,
+        google_id: user.google_id,
+        uid: user.uid,
+        isEmailVerified: user.isEmailVerified,
       });
     } catch (error) {
       console.error(error);
@@ -424,7 +431,7 @@ router.post("/profile/query/:method", authMiddleware, async (req, res) => {
       }
 
       const decoded = jwt.verify(token, secret) as any;
-      return res.status(200).json({ uid: decoded.uid });
+      return res.status(200).json(decoded);
     } catch (error) {
       return res.status(401).send("invalid-token");
     }
