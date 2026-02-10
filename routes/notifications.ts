@@ -31,47 +31,51 @@ const router = express.Router();
 //   }
 // });
 
-router.get("/:scope", authMiddleware, async (req: Request, res: Response) => {
-  const { scope } = req.params;
+router.get(
+  "/:scope",
+  authMiddleware,
+  async (req: Request<{ scope: string }>, res: Response) => {
+    const { scope } = req.params;
 
-  // 1. 커스텀 인터페이스를 사용하여 'any' 제거 (권장)
-  const jwtUser = (req as any).user;
+    // 1. 커스텀 인터페이스를 사용하여 'any' 제거 (권장)
+    const jwtUser = (req as any).user;
 
-  if (jwtUser === "Master") {
-    return res.status(403).json({ message: "master-token-denied" });
-  }
+    if (jwtUser === "Master") {
+      return res.status(403).json({ message: "master-token-denied" });
+    }
 
-  // 2. 유효한 scope 확인 및 파라미터 매핑 (Map 활용 시 더 깔끔함)
-  const scopeMap: Record<string, number> = { unread: 0, read: 1, all: 2 };
+    // 2. 유효한 scope 확인 및 파라미터 매핑 (Map 활용 시 더 깔끔함)
+    const scopeMap: Record<string, number> = { unread: 0, read: 1, all: 2 };
 
-  if (!(scope in scopeMap)) {
-    return res.status(400).json({ message: "invalid-scope" });
-  }
+    if (!(scope in scopeMap)) {
+      return res.status(400).json({ message: "invalid-scope" });
+    }
 
-  try {
-    const isAll = scope === "all";
-    const scopeActionParam = scopeMap[scope];
+    try {
+      const isAll = scope === "all";
+      const scopeActionParam = scopeMap[scope];
 
-    // 3. 쿼리와 파라미터를 변수로 분리하여 가독성 확보
-    const query = `
+      // 3. 쿼리와 파라미터를 변수로 분리하여 가독성 확보
+      const query = `
       SELECT * FROM notifications 
       WHERE uid = ? ${isAll ? "" : "AND isRead = ?"}
       ORDER BY createdAt DESC
     `;
 
-    const params = isAll ? [jwtUser.uid] : [jwtUser.uid, scopeActionParam];
+      const params = isAll ? [jwtUser.uid] : [jwtUser.uid, scopeActionParam];
 
-    const [rows] = await bitmapDb.query<Notification[]>(query, params);
+      const [rows] = await bitmapDb.query<Notification[]>(query, params);
 
-    if (rows.length === 0) {
-      return res.status(404).json({ error: "not-found" });
+      if (rows.length === 0) {
+        return res.status(404).json({ error: "not-found" });
+      }
+
+      res.json(rows);
+    } catch (error) {
+      console.error("Database Error:", error);
+      res.status(500).json({ error: "server-error" });
     }
-
-    res.json(rows);
-  } catch (error) {
-    console.error("Database Error:", error);
-    res.status(500).json({ error: "server-error" });
-  }
-});
+  },
+);
 
 export default router;
