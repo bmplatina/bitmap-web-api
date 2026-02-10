@@ -48,5 +48,9 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
-  "description": ""
+  "description": "",
+  "engines": {
+    "node": ">=22.12.0 <=22.16.0",
+    "yarn": "1.22.22"
+  }
 }
