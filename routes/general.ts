@@ -1,6 +1,11 @@
 import express, { Request, Response } from "express";
 import { bitmapDb } from "@/config/db";
-import { Carousel, Eula, MembershipApplies } from "@/config/types";
+import {
+  Carousel,
+  Eula,
+  DocumentArchives,
+  MembershipApplies,
+} from "@/config/types";
 
 const router = express.Router();
 
@@ -23,6 +28,28 @@ router.get("/eula/:title", async (req: Request, res: Response) => {
       ko: ko,
       en: en,
     });
+  } catch (error) {
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "server-error" });
+  }
+});
+
+router.get("/archive/:title", async (req: Request, res: Response) => {
+  const { title } = req.params;
+
+  try {
+    const [rows] = await bitmapDb.query<DocumentArchives[]>(
+      "SELECT * FROM documentArchives WHERE title = ?",
+      [title],
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    const doc = rows[0];
+
+    res.json(doc);
   } catch (error) {
     console.error("Database Error:", error);
     res.status(500).json({ error: "server-error" });

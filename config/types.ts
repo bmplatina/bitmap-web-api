@@ -135,6 +135,13 @@ interface Notification extends RowDataPacket {
   createdAt: string; // 생성 시간
 }
 
+interface DocumentArchives extends RowDataPacket {
+  id: number;
+  title: string;
+  content: string;
+  lastUpdatedAt: string;
+}
+
 export type {
   User,
   Eula,
@@ -146,4 +153,5 @@ export type {
   MembershipApplies,
   MembershipLeaveRequest,
   Notification,
+  DocumentArchives,
 };
