@@ -36,17 +36,11 @@ router.get("/eula/:title", async (req: Request, res: Response) => {
 
 router.get("/archive", async (req: Request, res: Response) => {
   try {
-    const [rows] = await bitmapDb.query<DocumentArchives[]>(
+    const [results] = await bitmapDb.query<DocumentArchives[]>(
       "SELECT * FROM documentArchives",
     );
 
-    if (rows.length === 0) {
-      return res.status(404).json({ error: "Document not found" });
-    }
-
-    const doc = rows[0];
-
-    res.json(doc);
+    res.json(results);
   } catch (error) {
     console.error("Database Error:", error);
     res.status(500).json({ error: "server-error" });
