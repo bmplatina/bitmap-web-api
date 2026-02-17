@@ -73,7 +73,7 @@ function getVerificationHtml(locale: string, verificationCode: string) {
   return `
     <div style="font-family: 'Pretendard', sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px; border: 1px solid #eee; border-radius: 12px;">
       <div style="margin-bottom: 32px; text-align: center;">
-        <img src="https://prodbybitmap.com/_next/static/media/bitmap_bmp.93518f1d.png" alt="Bitmap Logo" style="height: 32px;" />
+        <img src="https://prodbybitmap.com/_next/static/media/bitmap_bmp.93518f1d.png" alt="Bitmap Logo" style="height: 32px; filter: brightness(0);" />
       </div>
       <h2 style="color: #333; margin-bottom: 24px;">${title}</h2>
       <p style="color: #666; font-size: 15px; line-height: 1.6;">
