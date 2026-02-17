@@ -142,6 +142,26 @@ interface DocumentArchives extends RowDataPacket {
   lastUpdatedAt: string;
 }
 
+interface Project {
+  id: number;
+  category: "dev" | "video";
+  title: string;
+  description: string;
+  tags: string[];
+  link: string;
+  icon: any;
+}
+
+interface Portfolio extends RowDataPacket {
+  uid: string; // varchar(36)
+  position: string; // varchar(36)
+  headline: string; // text
+  stack: string; // text
+  skills: string[]; // json (배열 형태일 경우)
+  portfolioIntroduction: string; // text
+  project: Project[]; // json (객체 배열 형태일 경우)
+}
+
 export type {
   User,
   Eula,
@@ -154,4 +174,5 @@ export type {
   MembershipLeaveRequest,
   Notification,
   DocumentArchives,
+  Portfolio
 };

@@ -5,6 +5,7 @@ import {
   Eula,
   DocumentArchives,
   MembershipApplies,
+  Portfolio,
 } from "@/config/types";
 
 const router = express.Router();
@@ -101,6 +102,20 @@ router.get("/members/:scope", async (req: Request, res: Response) => {
       return res.json(results);
     }
     return res.status(400).send("invalid-method");
+  } catch (err) {
+    console.error("데이터 조회 중 오류:", err);
+    return res.status(500).send("server-error");
+  }
+});
+
+router.get("/portfolio/:uid", async (req: Request, res: Response) => {
+  const { uid } = req.params;
+  try {
+    const [results] = await bitmapDb.query<Portfolio[]>(
+      "SELECT * FROM portfolio WHERE uid = ?",
+      [uid],
+    );
+    return res.json(results);
   } catch (err) {
     console.error("데이터 조회 중 오류:", err);
     return res.status(500).send("server-error");
