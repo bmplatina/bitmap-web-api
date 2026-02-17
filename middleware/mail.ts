@@ -18,16 +18,17 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-function sendMail(email: string, title: string, body: string) {
+function sendMail(email: string, title: string, body: string, html: string) {
   // RTMP 이벤트 내부에서 호출할 전송 로직
   const mailOptions = {
     from: '"Bitmap" <public@prodbybitmap.com>', // 여기서 사용자 설정 도메인 사용 가능
     to: email,
     subject: title,
     text: body,
+    html,
   };
 
   return transporter.sendMail(mailOptions);
 }
 
-export default sendMail;
+export { sendMail };
