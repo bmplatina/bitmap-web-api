@@ -5,61 +5,11 @@ import passport from "passport"; // Passport 추가
 import { Strategy as GoogleStrategy } from "passport-google-oauth20"; // 구글 전략 추가
 import { v4 as uuidv4 } from "uuid";
 import { bitmapDb, googleApiKey } from "@/config/db";
-import { sendMail } from "@/middleware/mail";
+import { sendVerificationMail } from "@/middleware/mail";
 import { User } from "@/config/types";
 import { authMiddleware } from "@/middleware/auth";
 
 const router = express.Router();
-
-async function sendVerificationMail(
-  locale: string,
-  email: string,
-  verificationCode: string,
-) {
-  const title =
-    locale === "ko"
-      ? "[Bitmap] 회원가입 인증 번호"
-      : "[Bitmap] Verification Code for Sign Up";
-  const message =
-    locale === "ko"
-      ? `인증 번호는 [${verificationCode}] 입니다. 10분 이내에 입력해 주세요.`
-      : `Your verification code is [${verificationCode}]. Please enter it within 10 minutes.`;
-  const html = locale === "ko" ? `` : ``;
-  await sendMail(
-    email,
-    title,
-    message,
-    getVerificationHtml(locale, verificationCode),
-  );
-}
-
-function getVerificationHtml(locale: string, verificationCode: string) {
-  const bIsKorean: boolean = locale === "ko";
-
-  return `
-    <div style="font-family: 'Pretendard', sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px; border: 1px solid #eee; border-radius: 12px;">
-      <h2 style="color: #333; margin-bottom: 24px;">${bIsKorean ? "인증번호 안내" : "Authentication Code"}</h2>
-      <p style="color: #666; font-size: 15px; line-height: 1.6;">
-        ${bIsKorean ? "서비스 이용을 위해 본인 확인이 필요합니다." : "Mail verification is required to use the"}<br />
-        아래의 인증번호를 화면에 입력해주세요.
-      </p>
-      
-      <div style="margin: 32px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px; text-align: center;">
-        <span style="font-size: 32px; font-weight: bold; color: #2563eb; letter-spacing: 8px;">
-          ${verificationCode}
-        </span>
-      </div>
-      
-      <p style="color: #999; font-size: 13px;">
-        * 인증번호의 유효시간은 5분입니다.<br />
-        * 본인이 요청하지 않았을 경우 이 메일을 무시하셔도 됩니다.
-      </p>
-      
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
-      <p style="color: #bbb; font-size: 12px;">© 2024 서비스이름. All rights reserved.</p>
-    </div>
-  `;
-}
 
 // ==========================================
 // [추가] Passport Google Strategy 설정
