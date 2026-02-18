@@ -149,7 +149,7 @@ interface Project {
   description: string;
   tags: string[];
   link: string;
-  icon: any;
+  preview: string;
 }
 
 interface Portfolio extends RowDataPacket {
@@ -174,5 +174,5 @@ export type {
   MembershipLeaveRequest,
   Notification,
   DocumentArchives,
-  Portfolio
+  Portfolio,
 };
