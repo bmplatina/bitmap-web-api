@@ -115,7 +115,7 @@ router.get("/portfolio/:uid", async (req: Request, res: Response) => {
       "SELECT * FROM portfolio WHERE uid = ?",
       [uid],
     );
-    return res.json(results);
+    return res.json(results[0]);
   } catch (err) {
     console.error("데이터 조회 중 오류:", err);
     return res.status(500).send("server-error");
