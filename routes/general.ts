@@ -135,12 +135,10 @@ router.get("/app", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/app/:version", async (req: Request, res: Response) => {
+router.get("/app/latest", async (req: Request, res: Response) => {
   try {
-    const { version } = req.params;
     const [results] = await bitmapDb.query<BitmapApp[]>(
-      "SELECT * FROM bitmapApp WHERE version = ?",
-      [version],
+      "SELECT * FROM bitmapApp ORDER BY id DESC LIMIT 1;",
     );
     return res.json(results[0]);
   } catch (err) {
@@ -149,10 +147,12 @@ router.get("/app/:version", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/app/latest", async (req: Request, res: Response) => {
+router.get("/app/:version", async (req: Request, res: Response) => {
   try {
+    const { version } = req.params;
     const [results] = await bitmapDb.query<BitmapApp[]>(
-      "SELECT * FROM bitmapApp ORDER BY id DESC LIMIT 1;",
+      "SELECT * FROM bitmapApp WHERE version = ?",
+      [version],
     );
     return res.json(results[0]);
   } catch (err) {
