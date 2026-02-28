@@ -162,6 +162,13 @@ interface Portfolio extends RowDataPacket {
   project: Project[]; // json (객체 배열 형태일 경우)
 }
 
+interface BitmapApp extends RowDataPacket {
+  id: number;
+  version: string;
+  mac: string;
+  windows: string;
+}
+
 export type {
   User,
   Eula,
@@ -175,4 +182,5 @@ export type {
   Notification,
   DocumentArchives,
   Portfolio,
+  BitmapApp,
 };
