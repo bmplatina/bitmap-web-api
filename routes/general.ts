@@ -128,7 +128,7 @@ router.get("/app", async (req: Request, res: Response) => {
     const [results] = await bitmapDb.query<BitmapApp[]>(
       "SELECT * FROM bitmapApp;",
     );
-    return res.json(results[0]);
+    return res.json(results);
   } catch (err) {
     console.error("데이터 조회 중 오류:", err);
     return res.status(500).send("server-error");
