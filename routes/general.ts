@@ -123,6 +123,7 @@ router.get("/portfolio/:uid", async (req: Request, res: Response) => {
   }
 });
 
+/*
 router.get("/app", async (req: Request, res: Response) => {
   try {
     const [results] = await bitmapDb.query<BitmapApp[]>(
@@ -160,5 +161,6 @@ router.get("/app/:version", async (req: Request, res: Response) => {
     return res.status(500).send("server-error");
   }
 });
+*/
 
 export default router;
