@@ -22,6 +22,7 @@ import permissionRoutes from "@/routes/permissions";
 
 // Express 설정
 const app = express();
+app.set("trust proxy", true);
 const server = http.createServer(app); // Express 앱으로 HTTP 서버 생성
 const PORT = 3030;
 
