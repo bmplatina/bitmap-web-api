@@ -15,6 +15,7 @@ const router = express.Router();
 // [추가] Passport Google Strategy 설정
 // ==========================================
 passport.use(
+  "google-web",
   new GoogleStrategy(
     {
       clientID: googleApiKey.googleClientId,
@@ -54,6 +55,142 @@ passport.use(
       }
     },
   ),
+);
+
+passport.use(
+  "google-desktop",
+  new GoogleStrategy(
+    {
+      clientID: googleApiKey.googleClientIdDesktop,
+      clientSecret: googleApiKey.googleClientSecretDesktop,
+      callbackURL: "/auth/google/callback/desktop",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        // 1. 구글 ID로 기존 사용자 검색
+        const [rows] = await bitmapDb.query<User[]>(
+          "SELECT * FROM users WHERE google_id = ?",
+          [profile.id],
+        );
+        let user = rows[0];
+
+        // 2. 사용자가 없다면 회원가입 처리
+        if (!user) {
+          const newUid = uuidv4();
+          const email = profile.emails?.[0]?.value ?? ""; // 이메일 추출
+
+          await bitmapDb.query<User[]>(
+            "INSERT INTO users (uid, username, email, google_id, isEmailVerified) VALUES (?, ?, ?, ?, ?)",
+            [newUid, profile.displayName, email, profile.id, 1],
+          );
+
+          const [createdAccountQuery] = await bitmapDb.query<User[]>(
+            "SELECT * FROM users WHERE google_id = ?",
+            [profile.id],
+          );
+
+          return done(null, createdAccountQuery[0]);
+        }
+
+        return done(null, user);
+      } catch (error) {
+        return done(error, undefined);
+      }
+    },
+  ),
+);
+
+// ==========================================
+// [추가] Google 로그인 라우트
+// ==========================================
+
+// 1. 로그인 시도: 사용자가 이 주소로 접속하면 구글 로그인 창으로 이동
+router.get(
+  "/google",
+  passport.authenticate("google-web", { scope: ["profile", "email"] }),
+);
+
+// 2. 로그인 콜백: 구글 인증 완료 후 돌아오는 주소
+router.get(
+  "/google/callback",
+  passport.authenticate("google-web", {
+    session: false,
+    failureRedirect: "/login",
+  }),
+  (req, res) => {
+    // passport 전략(Strategy)이 성공하면 req.user에 사용자 정보가 담겨 있음
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(500).send("server-configuration-error");
+    }
+
+    const user = req.user as User;
+
+    // 3. JWT 토큰 발급 (기존 /login 로직과 동일한 포맷)
+    const token = jwt.sign(
+      {
+        uid: user.uid,
+        email: user.email,
+        username: user.username,
+        isAdmin: user.isAdmin,
+        isDeveloper: user.isDeveloper,
+        isTeammate: user.isTeammate,
+        avatarUri: user.avatarUri,
+        isEmailVerified: user.isEmailVerified,
+      },
+      secret,
+      // { expiresIn: "1h" }
+    );
+
+    // 4. 프론트엔드로 리다이렉트 (URL 쿼리 파라미터로 토큰 전달)
+    const frontendUrl = process.env.FRONTEND_URL || "https://prodbybitmap.com";
+    return res.redirect(`${frontendUrl}?token=${token}`);
+  },
+);
+
+// 1. 앱 로그인 시도: 사용자가 이 주소로 접속하면 구글 로그인 창으로 이동
+router.get(
+  "/google/desktop",
+  passport.authenticate("google-desktop", { scope: ["profile", "email"] }),
+);
+
+// 2. 앱 로그인 콜백: 구글 인증 완료 후 돌아오는 주소
+router.get(
+  "/google/callback/desktop",
+  passport.authenticate("google-desktop", {
+    session: false,
+    failureRedirect: "/login",
+  }),
+  (req, res) => {
+    // passport 전략(Strategy)이 성공하면 req.user에 사용자 정보가 담겨 있음
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(500).send("server-configuration-error");
+    }
+
+    const user = req.user as User;
+
+    // 3. JWT 토큰 발급 (기존 /login 로직과 동일한 포맷)
+    const token = jwt.sign(
+      {
+        uid: user.uid,
+        email: user.email,
+        username: user.username,
+        isAdmin: user.isAdmin,
+        isDeveloper: user.isDeveloper,
+        isTeammate: user.isTeammate,
+        avatarUri: user.avatarUri,
+        isEmailVerified: user.isEmailVerified,
+      },
+      secret,
+      // { expiresIn: "1h" }
+    );
+
+    // 4. 프론트엔드로 리다이렉트 (URL 쿼리 파라미터로 토큰 전달)
+    return res.redirect(`bitmap://token/${token}`);
+  },
 );
 
 // 3. 회원가입 API
@@ -276,55 +413,6 @@ router.post("/email/send", authMiddleware, async (req, res) => {
     return res.status(500).send("server-error");
   }
 });
-
-// ==========================================
-// [추가] Google 로그인 라우트
-// ==========================================
-
-// 1. 로그인 시도: 사용자가 이 주소로 접속하면 구글 로그인 창으로 이동
-router.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] }),
-);
-
-// 2. 로그인 콜백: 구글 인증 완료 후 돌아오는 주소
-router.get(
-  "/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: "/login",
-  }),
-  (req, res) => {
-    // passport 전략(Strategy)이 성공하면 req.user에 사용자 정보가 담겨 있음
-
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      return res.status(500).send("server-configuration-error");
-    }
-
-    const user = req.user as User;
-
-    // 3. JWT 토큰 발급 (기존 /login 로직과 동일한 포맷)
-    const token = jwt.sign(
-      {
-        uid: user.uid,
-        email: user.email,
-        username: user.username,
-        isAdmin: user.isAdmin,
-        isDeveloper: user.isDeveloper,
-        isTeammate: user.isTeammate,
-        avatarUri: user.avatarUri,
-        isEmailVerified: user.isEmailVerified,
-      },
-      secret,
-      // { expiresIn: "1h" }
-    );
-
-    // 4. 프론트엔드로 리다이렉트 (URL 쿼리 파라미터로 토큰 전달)
-    const frontendUrl = process.env.FRONTEND_URL || "https://prodbybitmap.com";
-    return res.redirect(`${frontendUrl}?token=${token}`);
-  },
-);
 
 // 6. 보호된 라우트 (기존 코드 유지)
 router.get("/profile", authMiddleware, async (req, res) => {

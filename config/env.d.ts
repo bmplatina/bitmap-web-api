@@ -11,6 +11,8 @@ declare global {
       DB_SCHEMA: string;
       GOOGLE_CLIENT_ID: string;
       GOOGLE_CLIENT_SECRET: string;
+      GOOGLE_CLIENT_ID_DESKTOP: string;
+      GOOGLE_CLIENT_SECRET_DESKTOP: string;
       YOUTUBE_API_KEY: string;
       FRONTEND_URL: string;
       JWT_SECRET: string;

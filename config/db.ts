@@ -16,6 +16,8 @@ const bitmapDb = mysql.createPool({
 const googleApiKey = {
   googleClientId: process.env.GOOGLE_CLIENT_ID,
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  googleClientIdDesktop: process.env.GOOGLE_CLIENT_ID_DESKTOP,
+  googleClientSecretDesktop: process.env.GOOGLE_CLIENT_SECRET_DESKTOP,
   youtubeApiKey: process.env.YOUTUBE_API_KEY,
 };
 
