@@ -189,7 +189,7 @@ router.get(
     );
 
     // 4. 프론트엔드로 리다이렉트 (URL 쿼리 파라미터로 토큰 전달)
-    return res.redirect(`bitmap://token/${token}`);
+    return res.redirect(`bitmap://auth?token=${token}`);
   },
 );
 
