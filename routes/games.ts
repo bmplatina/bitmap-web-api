@@ -3,6 +3,8 @@ import { bitmapDb } from "@/config/db";
 import { Game, GameRating, GameRatingRequest } from "@/config/types";
 import { ResultSetHeader } from "mysql2";
 import { authMiddleware } from "@/middleware/auth";
+import { stat } from "fs/promises";
+import path from "path";
 
 const router = express.Router();
 
@@ -14,6 +16,59 @@ router.get("/list", async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error("데이터 조회 중 오류:", err);
     res.status(500).json({ message: err.message || "server-error" });
+  }
+});
+
+router.get("/pick/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const [results] = await bitmapDb.query<Game[]>(
+      "SELECT * FROM games_list WHERE gameId=?",
+      [id],
+    );
+
+    if (!results || results.length === 0) {
+      return res.status(404).json({ message: "Game not found" });
+    }
+
+    const game = results[0];
+    const separator = "dl.prodbybitmap.com/download/";
+
+    // URL에서 파일명(하위 경로)만 추출하는 헬퍼 함수
+    const getRelPath = (url: string | null) => url?.split(separator)[1] || "";
+
+    const relPathMac = getRelPath(game.gameDownloadMacURL);
+    const relPathWin = getRelPath(game.gameDownloadWinURL);
+
+    // process.cwd()를 사용하여 서버 실행 위치 기준 절대 경로 생성
+    const uploadsDir = path.join(process.cwd(), "uploads");
+
+    // 파일 정보를 가져오는 공통 로직 (파일이 없을 경우 대비)
+    const getSafeSize = async (relPath: string) => {
+      if (!relPath) return 0;
+      try {
+        const fullPath = path.join(uploadsDir, relPath);
+        const stats = await stat(fullPath);
+        return stats.size / 1024 ** 3; // GB 변환
+      } catch {
+        return 0; // 파일이 없으면 0으로 처리 (혹은 에러 처리)
+      }
+    };
+
+    const [sizeWin, sizeMac] = await Promise.all([
+      getSafeSize(relPathWin),
+      getSafeSize(relPathMac),
+    ]);
+
+    const resultWithSize = {
+      ...game,
+      size: [parseFloat(sizeWin.toFixed(2)), parseFloat(sizeMac.toFixed(2))],
+    };
+
+    res.json(resultWithSize);
+  } catch (err: any) {
+    console.error("데이터 조회 중 오류:", err);
+    res.status(500).json({ message: "server-error" });
   }
 });
 
