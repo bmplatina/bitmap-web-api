@@ -108,6 +108,9 @@ router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
       gameHeadline: JSON.stringify(rawGameData.gameHeadline),
       gameDescription: JSON.stringify(rawGameData.gameDescription),
       gameImageURL: JSON.stringify(rawGameData.gameImageURL),
+      ratingContentDescriptors: JSON.stringify(
+        rawGameData.ratingContentDescriptors,
+      ),
       // 보안: 등록 시 uid는 토큰의 uid로 강제 설정
       uid: jwtUser.uid,
     };
@@ -151,6 +154,9 @@ router.post("/edit", authMiddleware, async (req: Request, res: Response) => {
       gameHeadline: JSON.stringify(rawGameData.gameHeadline),
       gameDescription: JSON.stringify(rawGameData.gameDescription),
       gameImageURL: JSON.stringify(rawGameData.gameImageURL),
+      ratingContentDescriptors: JSON.stringify(
+        rawGameData.ratingContentDescriptors,
+      ),
     };
 
     // 2. SET 절에 포함되면 안 되는 필드 제거

@@ -1,5 +1,14 @@
 import { RowDataPacket } from "mysql2";
 
+type RatingDetails =
+  | "crime"
+  | "drugs"
+  | "gamble"
+  | "horror"
+  | "sex"
+  | "swear"
+  | "violence";
+
 interface stringLocalized {
   en: string;
   ko: string;
@@ -53,6 +62,9 @@ interface Game extends RowDataPacket {
   gameBinaryName: string;
   gameHeadline: stringLocalized;
   gameDescription: stringLocalized;
+  ageRating: number;
+  ratingContentDescriptors: RatingDetails[];
+  customEula: string;
 }
 
 /**
