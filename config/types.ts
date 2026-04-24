@@ -76,6 +76,8 @@ interface GameListInternal extends Pick<
   | "gamePublisher"
   | "gameGenre"
   | "gameReleasedDate"
+  | "isApproved"
+  | "isEarlyAccess"
 > {}
 
 interface GameList extends GameListInternal, RowDataPacket {}
