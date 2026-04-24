@@ -67,6 +67,19 @@ interface Game extends RowDataPacket {
   customEula: string;
 }
 
+interface GameListInternal extends Pick<
+  Game,
+  | "gameId"
+  | "gameTitle"
+  | "gameImageURL"
+  | "gameDeveloper"
+  | "gamePublisher"
+  | "gameGenre"
+  | "gameReleasedDate"
+> {}
+
+interface GameList extends GameListInternal, RowDataPacket {}
+
 /**
  * 게임 평점 및 리뷰 데이터의 기본 구조
  */
@@ -185,6 +198,7 @@ export type {
   User,
   Eula,
   Game,
+  GameList,
   GameRating,
   GameRatingRequest,
   Carousel,

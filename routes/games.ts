@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { bitmapDb } from "@/config/db";
-import { Game, GameRating, GameRatingRequest } from "@/config/types";
+import { Game, GameList, GameRating, GameRatingRequest } from "@/config/types";
 import { ResultSetHeader } from "mysql2";
 import { authMiddleware } from "@/middleware/auth";
 import { stat } from "fs/promises";
@@ -10,12 +10,24 @@ const router = express.Router();
 
 // 모든 게임 데이터 가져오기 API
 router.get("/list", async (req: Request, res: Response) => {
+  const { page } = req.query;
+  const pageLimit = 8;
+
   try {
-    const [results] = await bitmapDb.query<Game[]>("SELECT * FROM games_list");
-    res.json(results);
+    const [results] = page
+      ? // 페이지 값이 있으면 해당 오프셋만 보이기
+        await bitmapDb.query<Game[]>(
+          "SELECT * FROM games_list LIMIT ? OFFSET ?",
+          [pageLimit, parseInt(page as string) * pageLimit],
+        )
+      : // 페이지 없이 전체 리스트를 가져오기
+        await bitmapDb.query<Game[]>("SELECT * FROM games_list");
+
+    const json: GameList[] = results;
+    return res.json(json);
   } catch (err: any) {
     console.error("데이터 조회 중 오류:", err);
-    res.status(500).json({ message: err.message || "server-error" });
+    return res.status(500).json({ message: err.message || "server-error" });
   }
 });
 
@@ -23,7 +35,7 @@ router.get("/pick/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const [results] = await bitmapDb.query<Game[]>(
-      "SELECT * FROM games_list WHERE gameId=?",
+      "SELECT * FROM games_list WHERE gameId = ?",
       [id],
     );
 
