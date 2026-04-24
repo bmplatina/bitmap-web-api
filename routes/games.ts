@@ -16,15 +16,16 @@ router.get("/list", async (req: Request, res: Response) => {
   try {
     const [results] = page
       ? // 페이지 값이 있으면 해당 오프셋만 보이기
-        await bitmapDb.query<Game[]>(
-          "SELECT * FROM games_list LIMIT ? OFFSET ?",
+        await bitmapDb.query<GameList[]>(
+          "SELECT gameId, gameTitle, gameImageURL, gameDeveloper, gamePublisher, gameGenre, gameReleasedDate FROM games_list LIMIT ? OFFSET ?",
           [pageLimit, parseInt(page as string) * pageLimit],
         )
       : // 페이지 없이 전체 리스트를 가져오기
-        await bitmapDb.query<Game[]>("SELECT * FROM games_list");
+        await bitmapDb.query<GameList[]>(
+          "SELECT gameId, gameTitle, gameImageURL, gameDeveloper, gamePublisher, gameGenre, gameReleasedDate FROM games_list",
+        );
 
-    const json: GameList[] = results;
-    return res.json(json);
+    return res.json(results);
   } catch (err: any) {
     console.error("데이터 조회 중 오류:", err);
     return res.status(500).json({ message: err.message || "server-error" });
