@@ -24,6 +24,7 @@
     "nodemailer": "^7.0.12",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "semver": "^7.7.4",
     "sequelize": "^6.37.7",
     "uuid": "^13.0.0",
     "ws": "^8.19.0"
@@ -41,6 +42,7 @@
     "@types/nodemailer": "^7.0.4",
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",
+    "@types/semver": "^7.7.1",
     "@types/ws": "^8.18.1",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
@@ -50,7 +52,7 @@
   },
   "description": "",
   "engines": {
-    "node": ">=22.12.0 <=22.16.0",
+    "node": ">=22.12.0 <=22.20.0",
     "yarn": "1.22.22"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"

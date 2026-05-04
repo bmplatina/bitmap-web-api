@@ -3,8 +3,9 @@ import { bitmapDb } from "@/config/db";
 import { Game, GameList, GameRating, GameRatingRequest } from "@/config/types";
 import { ResultSetHeader } from "mysql2";
 import { authMiddleware } from "@/middleware/auth";
-import { stat } from "fs/promises";
+import { access, readdir, stat } from "fs/promises";
 import path from "path";
+import semver from "semver";
 
 const router = express.Router();
 
@@ -84,6 +85,89 @@ router.get("/pick/:id", async (req: Request, res: Response) => {
     res.status(500).json({ message: "server-error" });
   }
 });
+
+router.get(
+  "/caidx/:gameId",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { platform, version } = req.query;
+    const { gameId } = req.params;
+
+    if (!platform || !version) return res.status(400).send("field-required");
+
+    const platformValue = Array.isArray(platform) ? platform[0] : platform;
+    const versionValue = Array.isArray(version) ? version[0] : version;
+
+    if (typeof platformValue !== "string" || typeof versionValue !== "string") {
+      return res.status(400).send("invalid-field-type");
+    }
+
+    const platformRaw = platformValue;
+    const versionRaw = versionValue;
+
+    try {
+      const fileDirectory = path.join(
+        process.cwd(),
+        "uploads",
+        "game",
+        "caidx",
+        gameId.toString(),
+      );
+      const platformName =
+        platformRaw.toLowerCase() === "windows"
+          ? "Windows"
+          : platformRaw.toLowerCase() === "macos"
+            ? "macOS"
+            : platformRaw;
+      let fileName = `${platformName}_${versionRaw}.caidx`;
+
+      if (versionRaw === "latest") {
+        const files = await readdir(fileDirectory);
+        const prefix = `${platformName}_`;
+        const ext = ".caidx";
+
+        const latestFile = files
+          .filter((file) => file.startsWith(prefix) && file.endsWith(ext))
+          .map((file) => {
+            const rawVersion = file.slice(prefix.length, -ext.length);
+            const coercedVersion = semver.coerce(rawVersion)?.version;
+            return { file, coercedVersion };
+          })
+          .filter(
+            (
+              candidate,
+            ): candidate is { file: string; coercedVersion: string } =>
+              !!candidate.coercedVersion,
+          )
+          .sort((a, b) =>
+            semver.rcompare(a.coercedVersion, b.coercedVersion),
+          )[0];
+
+        if (!latestFile) {
+          return res.status(404).send("파일을 찾을 수 없습니다.");
+        }
+
+        fileName = latestFile.file;
+      }
+
+      const caidxAbsPath = path.join(fileDirectory, fileName);
+      await access(caidxAbsPath);
+
+      res.download(caidxAbsPath, (err) => {
+        if (err) {
+          if (res.headersSent) {
+            // 이미 응답이 일부 전송된 경우 처리
+            return;
+          }
+          res.status(404).send("파일을 찾을 수 없습니다.");
+        }
+      });
+    } catch (err: any) {
+      console.error("데이터 조회 중 오류:", err);
+      res.status(500).json({ message: "server-error" });
+    }
+  },
+);
 
 // 모든 게임 데이터 가져오기 API
 router.get("/list/uid", authMiddleware, async (req: Request, res: Response) => {
