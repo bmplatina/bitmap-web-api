@@ -186,7 +186,7 @@ router.get("/list/uid", authMiddleware, async (req: Request, res: Response) => {
 });
 
 // 데이터 삽입 API (Submit)
-router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
+router.post("/publish", authMiddleware, async (req: Request, res: Response) => {
   const rawGameData: Game = req.body;
   const jwtUser = (req as any).user;
 
@@ -232,7 +232,7 @@ router.post("/submit", authMiddleware, async (req: Request, res: Response) => {
 });
 
 // 게임 정보 수정 API (Edit)
-router.post("/edit", authMiddleware, async (req: Request, res: Response) => {
+router.put("/publish", authMiddleware, async (req: Request, res: Response) => {
   const rawGameData: Game = req.body;
   const jwtUser = (req as any).user;
 
@@ -299,9 +299,10 @@ router.get("/rate/:gameId", async (req: Request, res: Response) => {
 
 // 평가 추가 API
 router.post(
-  "/rate/add",
+  "/rate/:gameId",
   authMiddleware,
   async (req: Request, res: Response) => {
+    const { gameId } = req.params;
     const gameRate: GameRatingRequest = req.body;
     const jwtUser = (req as any).user;
 
@@ -315,7 +316,7 @@ router.post(
       const [result] = await bitmapDb.query<ResultSetHeader>(
         "INSERT INTO GameRating (gameId, uid, rating, title, content) VALUES (?, ?, ?, ?, ?)",
         [
-          gameRate.gameId,
+          gameId,
           gameRate.uid,
           gameRate.rating,
           gameRate.title,
@@ -334,11 +335,12 @@ router.post(
 );
 
 // 평가 수정 API
-router.post(
-  "/rate/edit",
+router.put(
+  "/rate/:gameId",
   authMiddleware,
   async (req: Request, res: Response) => {
-    const { gameId, uid, ...updateFields }: GameRatingRequest = req.body;
+    const { gameId } = req.params;
+    const { uid, ...updateFields }: GameRatingRequest = req.body;
     const jwtUser = (req as any).user;
 
     try {
@@ -365,11 +367,11 @@ router.post(
 );
 
 // 평가 제거 API
-router.post(
-  "/rate/delete",
+router.delete(
+  "/rate/:gameId",
   authMiddleware,
   async (req: Request, res: Response) => {
-    const { gameId } = req.body;
+    const { gameId } = req.params;
     const jwtUser = (req as any).user;
 
     try {
