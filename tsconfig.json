@@ -20,9 +20,7 @@
     "baseUrl": "./",
     "paths": {
       "@/*": ["./*"]
-    },
-    "typeRoots": ["./node_modules/@types"],
-    "types": ["node", "express", "multer"]
+    }
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "dist"]
