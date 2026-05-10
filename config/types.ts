@@ -196,6 +196,13 @@ interface BitmapApp extends RowDataPacket {
   windows: string;
 }
 
+interface Playtime extends RowDataPacket {
+  id: number;
+  uid: string;
+  gameId: number;
+  playtime: number;
+}
+
 export type {
   User,
   Eula,
@@ -211,4 +218,5 @@ export type {
   DocumentArchives,
   Portfolio,
   BitmapApp,
+  Playtime,
 };

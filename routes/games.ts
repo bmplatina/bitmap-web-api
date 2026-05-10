@@ -1,6 +1,12 @@
 import express, { Request, Response } from "express";
 import { bitmapDb } from "@/config/db";
-import { Game, GameList, GameRating, GameRatingRequest } from "@/config/types";
+import {
+  Game,
+  GameList,
+  GameRating,
+  GameRatingRequest,
+  Playtime,
+} from "@/config/types";
 import { ResultSetHeader } from "mysql2";
 import { authMiddleware } from "@/middleware/auth";
 import { access, readdir, stat } from "fs/promises";
@@ -8,6 +14,25 @@ import path from "path";
 import semver from "semver";
 
 const router = express.Router();
+
+const parseGameId = (gameId: string | string[] | undefined): number | null => {
+  if (typeof gameId !== "string") return null;
+  const parsed = Number(gameId);
+  if (!Number.isInteger(parsed) || parsed <= 0) return null;
+  return parsed;
+};
+
+const parsePlaytime = (playtime: unknown): number | null => {
+  if (typeof playtime !== "number") return null;
+  if (
+    !Number.isFinite(playtime) ||
+    !Number.isInteger(playtime) ||
+    playtime < 0
+  ) {
+    return null;
+  }
+  return playtime;
+};
 
 // 모든 게임 데이터 가져오기 API
 router.get("/list", async (req: Request, res: Response) => {
@@ -378,6 +403,150 @@ router.delete(
       const [result] = await bitmapDb.query<ResultSetHeader>(
         "DELETE FROM GameRating WHERE gameId = ? AND uid = ?",
         [gameId, jwtUser.uid],
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "not-found" });
+      }
+
+      res.json({ message: "deleted" });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "server-error" });
+    }
+  },
+);
+
+router.get(
+  "/playtime/:gameId",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { gameId } = req.params;
+    const parsedGameId = parseGameId(gameId);
+    const jwtUser = (req as any).user;
+
+    if (parsedGameId === null) {
+      return res.status(400).json({ message: "invalid-field-type" });
+    }
+
+    try {
+      const [result] = await bitmapDb.query<Playtime[]>(
+        "SELECT * FROM games_playtime WHERE gameId = ? AND uid = ?",
+        [parsedGameId, jwtUser.uid],
+      );
+
+      if (!result[0]) {
+        return res.status(404).json({ message: "not-found" });
+      }
+
+      res.json(result[0]);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "server-error" });
+    }
+  },
+);
+
+router.post(
+  "/playtime/:gameId",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { gameId } = req.params;
+    const { playtime } = req.body;
+    const parsedGameId = parseGameId(gameId);
+    const parsedPlaytime = parsePlaytime(playtime);
+    const jwtUser = (req as any).user;
+
+    if (parsedGameId === null) {
+      return res.status(400).json({ message: "invalid-field-type" });
+    }
+
+    if (playtime === undefined) {
+      return res.status(400).json({ message: "field-required" });
+    }
+
+    if (parsedPlaytime === null) {
+      return res.status(400).json({ message: "invalid-field-type" });
+    }
+
+    try {
+      const [checkExisting] = await bitmapDb.query<Playtime[]>(
+        "SELECT * FROM games_playtime WHERE gameId = ? AND uid = ?",
+        [parsedGameId, jwtUser.uid],
+      );
+
+      if (checkExisting.length > 0) {
+        return res.status(400).json({ message: "already-exist" });
+      }
+
+      const [result] = await bitmapDb.query<ResultSetHeader>(
+        "INSERT INTO games_playtime (gameId, uid, playtime) VALUES (?, ?, ?)",
+        [parsedGameId, jwtUser.uid, parsedPlaytime],
+      );
+
+      res.json({
+        message: "submit-succeed",
+        id: result.insertId,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "server-error" });
+    }
+  },
+);
+
+router.put(
+  "/playtime/:gameId",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { gameId } = req.params;
+    const { playtime } = req.body;
+    const parsedGameId = parseGameId(gameId);
+    const parsedPlaytime = parsePlaytime(playtime);
+    const jwtUser = (req as any).user;
+
+    if (parsedGameId === null) {
+      return res.status(400).json({ message: "invalid-field-type" });
+    }
+
+    if (playtime === undefined) {
+      return res.status(400).json({ message: "field-required" });
+    }
+
+    if (parsedPlaytime === null) {
+      return res.status(400).json({ message: "invalid-field-type" });
+    }
+
+    try {
+      const [result] = await bitmapDb.query<ResultSetHeader>(
+        "UPDATE games_playtime SET playtime = ? WHERE gameId = ? AND uid = ?",
+        [parsedPlaytime, parsedGameId, jwtUser.uid],
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "not-found" });
+      }
+
+      res.json({ message: "updated" });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "server-error" });
+    }
+  },
+);
+
+router.delete(
+  "/playtime/:gameId",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { gameId } = req.params;
+    const parsedGameId = parseGameId(gameId);
+    const jwtUser = (req as any).user;
+
+    if (parsedGameId === null) {
+      return res.status(400).json({ message: "invalid-field-type" });
+    }
+
+    try {
+      const [result] = await bitmapDb.query<ResultSetHeader>(
+        "DELETE FROM games_playtime WHERE gameId = ? AND uid = ?",
+        [parsedGameId, jwtUser.uid],
       );
 
       if (result.affectedRows === 0) {
