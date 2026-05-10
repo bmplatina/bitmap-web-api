@@ -2,9 +2,10 @@
   "name": "bitmap-api-server",
   "version": "1.0.0",
   "main": "dist/api.js",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch api.ts",
-    "build": "tsc && tsc-alias",
+    "build": ".yarn/sdks/typescript/bin/tsc && tsc-alias",
     "start:berry": "yarn node dist/api.js",
     "start": "node dist/api.js"
   },
