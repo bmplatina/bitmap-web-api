@@ -4,8 +4,8 @@
   "main": "dist/api.js",
   "scripts": {
     "dev": "tsx watch api.ts",
-    "build": ".yarn/sdks/typescript/bin/tsc && tsc-alias",
-    "start:berry": "yarn node dist/api.js",
+    "build": "tsc && tsc-alias",
+    "start:pnp": "yarn node dist/api.js",
     "start": "node dist/api.js"
   },
   "keywords": [],
