@@ -18,7 +18,7 @@ const router = express.Router();
 const parseGameId = (gameId: string | string[] | undefined): number | null => {
   if (typeof gameId !== "string") return null;
   const parsed = Number(gameId);
-  if (!Number.isInteger(parsed) || parsed <= 0) return null;
+  if (!Number.isInteger(parsed) || parsed < 0) return null;
   return parsed;
 };
 
