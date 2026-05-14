@@ -445,7 +445,7 @@ router.get("/profile", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/profile/query/:method", authMiddleware, async (req, res) => {
+router.post("/profile/:method", authMiddleware, async (req, res) => {
   const { method } = req.params;
 
   // 7. UID 기반으로 프로필 검색
@@ -511,7 +511,7 @@ router.post("/profile/query/:method", authMiddleware, async (req, res) => {
   return res.status(400).send("invalid-method");
 });
 
-router.post("/edit/:method", authMiddleware, async (req, res) => {
+router.put("/profile/:method", authMiddleware, async (req, res) => {
   const { method } = req.params;
   const jwtUser = (req as any).user;
 
