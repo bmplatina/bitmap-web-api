@@ -42,7 +42,7 @@ interface Game extends RowDataPacket {
   isApproved: boolean;
   uid: string;
   gameTitle: string;
-  gameLatestRevision: number;
+  gameLatestRevision: string;
   gamePlatformWindows: boolean;
   gamePlatformMac: boolean;
   gameEngine: string;
