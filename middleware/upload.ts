@@ -84,6 +84,33 @@ const fileFilterImage = (
   }
 };
 
+const fileFilterDesync = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback,
+) => {
+  // 허용할 확장자 정규식
+  const allowedTypes = /catar|caibx|caidx/;
+  // 파일 확장자 확인
+  const extname = allowedTypes.test(
+    path.extname(file.originalname).toLowerCase(),
+  );
+  // MIME 타입 확인 (이중 보안)
+  const mimetype = allowedTypes.test(file.mimetype);
+
+  if (extname && mimetype) {
+    return cb(null, true);
+  } else {
+    // 거부 시 에러 메시지 전달
+    return cb(
+      new Error(
+        "지원되지 않는 파일 형식입니다. (catar, caibx, caidx만 가능)",
+      ) as any,
+      false,
+    );
+  }
+};
+
 // 4. Multer 인스턴스 생성 및 export
 const uploadGameImage = multer({
   storage: storage,
@@ -91,4 +118,10 @@ const uploadGameImage = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB 제한
 });
 
-export { uploadGameImage };
+const uploadDesyncFile = multer({
+  storage: storage,
+  fileFilter: fileFilterDesync,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB 제한
+});
+
+export { uploadGameImage, uploadDesyncFile };
