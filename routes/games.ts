@@ -282,7 +282,7 @@ router.put("/publish", authMiddleware, async (req: Request, res: Response) => {
     };
 
     // 2. SET 절에 포함되면 안 되는 필드 제거
-    // delete dbGameData.gameId; // PK는 WHERE 절에서 사용하므로 SET에서 제외
+    delete dbGameData.gameId; // PK는 WHERE 절에서 사용하므로 SET에서 제외
     delete dbGameData.uid; // 소유자 변경 방지
     delete dbGameData.isApproved; // 승인 상태 임의 변경 방지 (필요 시)
 
