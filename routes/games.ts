@@ -286,9 +286,15 @@ router.put("/publish", authMiddleware, async (req: Request, res: Response) => {
     delete dbGameData.uid; // 소유자 변경 방지
     delete dbGameData.isApproved; // 승인 상태 임의 변경 방지 (필요 시)
 
+    const gameId = rawGameData.gameId;
+
+    const columns = Object.keys(dbGameData);
+    const values = Object.values(dbGameData);
+    const setClause = columns.map((col) => `\`${col}\` = ?`).join(", ");
+
     const [result] = await bitmapDb.query<ResultSetHeader>(
-      "UPDATE games_list SET ? WHERE gameId = ?",
-      [dbGameData, rawGameData.gameId],
+      `UPDATE games_list SET ${setClause} WHERE gameId = ?`,
+      [...values, gameId],
     );
 
     if (result.affectedRows === 0) {
