@@ -269,22 +269,36 @@ router.put("/publish", authMiddleware, async (req: Request, res: Response) => {
       throw Error("not-author");
     }
 
-    // 1. DB 저장을 위한 데이터 변환
-    const dbGameData: any = {
-      ...rawGameData,
+    // 1. DB 저장을 위한 데이터 변환 — DB 컬럼에 해당하는 필드만 명시적으로 추출
+    const dbGameData: Record<string, any> = {
+      gameTitle: rawGameData.gameTitle,
+      gameLatestRevision: rawGameData.gameLatestRevision,
+      gamePlatformWindows: rawGameData.gamePlatformWindows,
+      gamePlatformMac: rawGameData.gamePlatformMac,
+      gameEngine: rawGameData.gameEngine,
       gameGenre: JSON.stringify(rawGameData.gameGenre),
+      gameDeveloper: rawGameData.gameDeveloper,
+      gamePublisher: rawGameData.gamePublisher,
+      isEarlyAccess: rawGameData.isEarlyAccess,
+      isReleased: rawGameData.isReleased,
+      gameReleasedDate: rawGameData.gameReleasedDate,
+      gameWebsite: rawGameData.gameWebsite,
+      gameVideoURL: rawGameData.gameVideoURL,
+      gameDownloadMacURL: rawGameData.gameDownloadMacURL,
+      requirementsMac: rawGameData.requirementsMac,
+      gameDownloadWinURL: rawGameData.gameDownloadWinURL,
+      requirementsWindows: rawGameData.requirementsWindows,
+      gameImageURL: JSON.stringify(rawGameData.gameImageURL),
+      gameBinaryName: rawGameData.gameBinaryName,
       gameHeadline: JSON.stringify(rawGameData.gameHeadline),
       gameDescription: JSON.stringify(rawGameData.gameDescription),
-      gameImageURL: JSON.stringify(rawGameData.gameImageURL),
+      ageRating: rawGameData.ageRating,
       ratingContentDescriptors: JSON.stringify(
         rawGameData.ratingContentDescriptors,
       ),
+      customEula: rawGameData.customEula,
     };
-
-    // 2. SET 절에 포함되면 안 되는 필드 제거
-    delete dbGameData.gameId; // PK는 WHERE 절에서 사용하므로 SET에서 제외
-    delete dbGameData.uid; // 소유자 변경 방지
-    delete dbGameData.isApproved; // 승인 상태 임의 변경 방지 (필요 시)
+    // gameId, uid, isApproved は SET に含めない
 
     const gameId = rawGameData.gameId;
 
