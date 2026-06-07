@@ -203,6 +203,13 @@ interface Playtime extends RowDataPacket {
   playtime: number;
 }
 
+interface CaidxLists {
+  folders: string[];
+  symlinks: string[];
+  files: string[];
+  others: string[];
+}
+
 export type {
   User,
   Eula,
@@ -219,4 +226,5 @@ export type {
   Portfolio,
   BitmapApp,
   Playtime,
+  CaidxLists,
 };

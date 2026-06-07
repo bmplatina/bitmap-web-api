@@ -6,10 +6,12 @@ import {
   GameRating,
   GameRatingRequest,
   Playtime,
+  CaidxLists,
 } from "@/config/types";
 import { ResultSetHeader } from "mysql2";
 import { authMiddleware } from "@/middleware/auth";
 import { access, readdir, stat } from "fs/promises";
+import fs from "fs/promises";
 import path from "path";
 import semver from "semver";
 
@@ -111,6 +113,7 @@ router.get("/pick/:id", async (req: Request, res: Response) => {
   }
 });
 
+// 게임 ID에 맞는 caidx 파일 GET
 router.get(
   "/caidx/:gameId",
   authMiddleware,
@@ -194,7 +197,51 @@ router.get(
   },
 );
 
-// 모든 게임 데이터 가져오기 API
+// 게임 ID에 맞는 caidx 파일 GET
+router.get(
+  "/caidx/:gameId/list",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { gameId } = req.params;
+
+    try {
+      const fileDirectory = path.join(
+        process.cwd(),
+        "uploads",
+        "game",
+        "caidx",
+        gameId.toString(),
+      );
+
+      const entries = await fs.readdir(fileDirectory, { withFileTypes: true });
+      const result: CaidxLists = {
+        folders: [],
+        symlinks: [],
+        files: [],
+        others: [],
+      };
+
+      entries.forEach((entry) => {
+        if (entry.isDirectory()) {
+          result.folders.push(entry.name);
+        } else if (entry.isFile()) {
+          result.files.push(entry.name);
+        } else if (entry.isSymbolicLink()) {
+          result.symlinks.push(entry.name);
+        } else {
+          result.others.push(entry.name);
+        }
+      });
+
+      return res.status(200).json(result);
+    } catch (err: any) {
+      console.error("데이터 조회 중 오류:", err);
+      res.status(500).json({ message: "server-error" });
+    }
+  },
+);
+
+// 사용자가 퍼블리시한 게임 조회
 router.get("/list/uid", authMiddleware, async (req: Request, res: Response) => {
   const jwtUser = (req as any).user;
   try {
