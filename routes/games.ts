@@ -284,8 +284,8 @@ router.post("/publish", authMiddleware, async (req: Request, res: Response) => {
       uid: jwtUser.uid,
     };
 
-    // 2. 불필요하거나 충돌을 일으키는 필드 제거
-    // delete dbGameData.gameId; // AUTO_INCREMENT 충돌 방지
+    // 2. 클라이언트가 보낸 gameId를 제거하여 AUTO_INCREMENT에 의한 자동 할당
+    delete dbGameData.gameId;
 
     const [result] = await bitmapDb.query<ResultSetHeader>(
       "INSERT INTO games_list SET ?",
@@ -314,6 +314,18 @@ router.put("/publish", authMiddleware, async (req: Request, res: Response) => {
     }
     if (rawGameData.uid !== jwtUser.uid) {
       throw Error("not-author");
+    }
+
+    // DB에서 실제 소유자를 확인하여 변조된 요청 차단
+    const [existingGame] = await bitmapDb.query<Game[]>(
+      "SELECT uid FROM games_list WHERE gameId = ?",
+      [rawGameData.gameId],
+    );
+    if (!existingGame[0]) {
+      return res.status(404).json({ message: "invalid-gameid" });
+    }
+    if (existingGame[0].uid !== jwtUser.uid) {
+      return res.status(403).json({ message: "not-author" });
     }
 
     // 1. DB 저장을 위한 데이터 변환 — DB 컬럼에 해당하는 필드만 명시적으로 추출
