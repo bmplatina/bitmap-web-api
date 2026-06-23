@@ -43,8 +43,9 @@ app.use(
   }),
 );
 
-// JSON 파싱을 위한 미들웨어
-app.use(express.json());
+// JSON 파싱을 위한 미들웨어 (업로드 제한과 동일하게 10MB로 설정)
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(passport.initialize());
 
 // 라우트 설정
