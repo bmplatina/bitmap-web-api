@@ -43,6 +43,10 @@ app.use(
   }),
 );
 
+// /upload 라우트는 multer가 직접 multipart/form-data를 처리하므로
+// express.json()/urlencoded() body parser보다 먼저 등록해야 413 에러를 방지
+app.use("/upload", uploadRoutes);
+
 // JSON 파싱을 위한 미들웨어 (업로드 제한과 동일하게 10MB로 설정)
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
@@ -53,7 +57,6 @@ app.use("/general", generalRoutes);
 app.use("/auth", authRoutes);
 app.use("/games", gamesRoutes);
 app.use("/notify", notificationRoutes);
-app.use("/upload", uploadRoutes);
 app.use("/youtube", youtubeRoutes);
 app.use("/permissions", permissionRoutes);
 
