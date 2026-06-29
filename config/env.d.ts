@@ -19,6 +19,7 @@ declare global {
       ICLOUD_APP_PASSWD: string;
       ICLOUD_EMAIL: string;
       MASTER_TOKEN: string;
+      GITHUB_TOKEN?: string;
     }
   }
   namespace Express {}

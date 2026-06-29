@@ -6,8 +6,13 @@ import {
   DocumentArchives,
   MembershipApplies,
   Portfolio,
-  BitmapApp,
 } from "@/config/types";
+import {
+  getAllReleases,
+  getLatestRelease,
+  getReleaseByTag,
+  getLastFetchedAt,
+} from "@/config/githubCache";
 
 const router = express.Router();
 
@@ -123,44 +128,51 @@ router.get("/portfolio/:uid", async (req: Request, res: Response) => {
   }
 });
 
-/*
-router.get("/app", async (req: Request, res: Response) => {
-  try {
-    const [results] = await bitmapDb.query<BitmapApp[]>(
-      "SELECT * FROM bitmapApp;",
-    );
-    return res.json(results);
-  } catch (err) {
-    console.error("데이터 조회 중 오류:", err);
-    return res.status(500).send("server-error");
+router.get("/app", (req: Request, res: Response) => {
+  const releases = getAllReleases();
+
+  if (releases.length === 0) {
+    return res
+      .status(503)
+      .json({ error: "릴리즈 캐시가 아직 준비되지 않았습니다." });
   }
+
+  res.json({
+    cachedAt: getLastFetchedAt()?.toISOString() ?? null,
+    count: releases.length,
+    releases,
+  });
 });
 
-router.get("/app/latest", async (req: Request, res: Response) => {
-  try {
-    const [results] = await bitmapDb.query<BitmapApp[]>(
-      "SELECT * FROM bitmapApp ORDER BY id DESC LIMIT 1;",
-    );
-    return res.json(results[0]);
-  } catch (err) {
-    console.error("데이터 조회 중 오류:", err);
-    return res.status(500).send("server-error");
+router.get("/app/latest", (req: Request, res: Response) => {
+  const latest = getLatestRelease();
+
+  if (!latest) {
+    return res
+      .status(503)
+      .json({ error: "릴리즈 캐시가 아직 준비되지 않았습니다." });
   }
+
+  res.json({
+    cachedAt: getLastFetchedAt()?.toISOString() ?? null,
+    release: latest,
+  });
 });
 
-router.get("/app/:version", async (req: Request, res: Response) => {
-  try {
-    const { version } = req.params;
-    const [results] = await bitmapDb.query<BitmapApp[]>(
-      "SELECT * FROM bitmapApp WHERE version = ?",
-      [version],
-    );
-    return res.json(results[0]);
-  } catch (err) {
-    console.error("데이터 조회 중 오류:", err);
-    return res.status(500).send("server-error");
+router.get("/app/:version", (req: Request, res: Response) => {
+  const version = String(req.params.version);
+  const release = getReleaseByTag(version);
+
+  if (!release) {
+    return res
+      .status(404)
+      .json({ error: `릴리즈를 찾을 수 없습니다: ${version}` });
   }
+
+  res.json({
+    cachedAt: getLastFetchedAt()?.toISOString() ?? null,
+    release,
+  });
 });
-*/
 
 export default router;

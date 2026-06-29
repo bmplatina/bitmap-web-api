@@ -196,6 +196,42 @@ interface BitmapApp extends RowDataPacket {
   windows: string;
 }
 
+interface GitHubUser {
+  login: string;
+  id: number;
+  avatar_url: string;
+  html_url: string;
+}
+
+interface GitHubAsset {
+  id: number;
+  name: string;
+  content_type: string;
+  size: number;
+  download_count: number;
+  browser_download_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface GitHubRelease {
+  id: number;
+  url: string;
+  html_url: string;
+  tag_name: string;
+  target_commitish: string;
+  name: string;
+  body: string; // 마크다운 형식의 릴리스 노트
+  draft: boolean;
+  prerelease: boolean;
+  created_at: string; // ISO 8601 날짜
+  published_at: string;
+  author: GitHubUser;
+  assets: GitHubAsset[];
+  tarball_url: string;
+  zipball_url: string;
+}
+
 interface Playtime extends RowDataPacket {
   id: number;
   uid: string;
@@ -225,6 +261,9 @@ export type {
   DocumentArchives,
   Portfolio,
   BitmapApp,
+  GitHubUser,
+  GitHubAsset,
+  GitHubRelease,
   Playtime,
   CaidxLists,
 };

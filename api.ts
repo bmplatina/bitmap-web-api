@@ -19,6 +19,7 @@ import notificationRoutes from "@/routes/notifications";
 import uploadRoutes from "@/routes/upload";
 import youtubeRoutes from "@/routes/youtube";
 import permissionRoutes from "@/routes/permissions";
+import { initGitHubCache } from "@/config/githubCache";
 
 // Express 설정
 const app = express();
@@ -65,4 +66,7 @@ server.listen(PORT, () => {
   console.log(
     `HTTP API와 WebSocket 서버가 http://localhost:${PORT} 에서 함께 실행 중`,
   );
+
+  // GitHub 릴리즈 캐시 초기화 (비동기, 서버 기동 비차단)
+  initGitHubCache();
 });
